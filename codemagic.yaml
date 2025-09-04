@@ -1,9 +1,9 @@
 workflows:
-  ios-release-no-shorebird
-    name:ios release (No Shorebird)
-    envoirment:
+  ios-release-no-shorebird:
+    name: ios release (No Shorebird)
+    environment:
       flutter: stable
-      xcode:latest
+      xcode: latest
     scripts:
       - flutter build ios --simulator
       - mkdir -p build/ios/ipa
