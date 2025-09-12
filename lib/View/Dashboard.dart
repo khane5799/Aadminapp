@@ -1,6 +1,8 @@
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/View/Events.dart';
 import 'package:adminapp/View/MemberView/Member.dart';
+import 'package:adminapp/View/Summery.dart';
+import 'package:adminapp/Widgets/appbar.dart';
 import 'package:adminapp/Widgets/statcard.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -34,36 +36,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       // Only show AppBar on Dashboard tab
       appBar: _selectedIndex == 0
-          ? PreferredSize(
-              preferredSize: const Size.fromHeight(50),
-              child: AppBar(
-                automaticallyImplyLeading: false,
-                flexibleSpace: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [primerycolor, secondaryColor],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(14),
-                      bottomRight: Radius.circular(14),
-                    ),
-                  ),
-                ),
-                backgroundColor: Colors.transparent,
-                elevation: 4,
-                title: Text(
-                  "Dashboard",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: whiteColor,
-                  ),
-                ),
-                centerTitle: true,
-              ),
+          ? CustomAppBar(
+              automaticallyImplyLeading: false,
+              title: "Dashboard",
+              ActiononTap: () {},
+              centertitle: true,
+              primerycolor: primerycolor,
+              secondaryColor: secondaryColor,
             )
+          // ? PreferredSize(
+          //     preferredSize: const Size.fromHeight(50),
+          //     child: AppBar(
+          //       automaticallyImplyLeading: false,
+          //       flexibleSpace: Container(
+          //         decoration: BoxDecoration(
+          //           gradient: LinearGradient(
+          //             colors: [primerycolor, secondaryColor],
+          //             begin: Alignment.topLeft,
+          //             end: Alignment.bottomRight,
+          //           ),
+          //           borderRadius: const BorderRadius.only(
+          //             bottomLeft: Radius.circular(14),
+          //             bottomRight: Radius.circular(14),
+          //           ),
+          //         ),
+          //       ),
+          //       backgroundColor: Colors.transparent,
+          //       elevation: 4,
+          //       title: Text(
+          //         "Dashboard",
+          //         style: TextStyle(
+          //           fontSize: 22,
+          //           fontWeight: FontWeight.bold,
+          //           color: whiteColor,
+          //         ),
+          //       ),
+          //       centerTitle: true,
+          //     ),
+          //   )
           : null,
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -249,14 +259,14 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
-// Summary Page
-class SummaryPage extends StatelessWidget {
-  const SummaryPage({super.key});
+// // Summary Page
+// class SummaryPage extends StatelessWidget {
+//   const SummaryPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text("Summary Page Content", style: TextStyle(fontSize: 22)),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Center(
+//       child: Text("Summary Page Content", style: TextStyle(fontSize: 22)),
+//     );
+//   }
+// }

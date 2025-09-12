@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:adminapp/Constents/Colors.dart';
+import 'package:adminapp/Provider/AddMemberProvider.dart';
+import 'package:adminapp/Widgets/appbar.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class Addmember extends StatefulWidget {
   const Addmember({super.key});
@@ -13,14 +16,13 @@ class Addmember extends StatefulWidget {
 class _AddmemberState extends State<Addmember> {
   File? _profileImage;
 
-  // Controllers with dummy data
+  // Controllers
   final _nameController = TextEditingController();
   final _membershipController = TextEditingController();
   final _divisionController = TextEditingController();
   final _stateController = TextEditingController();
   final _positionController = TextEditingController();
 
-  // Social controllers with dummy data
   final _facebookController = TextEditingController();
   final _instagramController = TextEditingController();
   final _twitterController = TextEditingController();
@@ -40,69 +42,28 @@ class _AddmemberState extends State<Addmember> {
     super.dispose();
   }
 
-  void _resetProfile() {
-    setState(() {
-      _profileImage = null;
-      _nameController.clear();
-      _membershipController.clear();
-      _divisionController.clear();
-      _stateController.clear();
-      _positionController.clear();
-      _facebookController.clear();
-      _instagramController.clear();
-      _twitterController.clear();
-      _whatsappController.clear();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final addMemberProvider = Provider.of<AddMemberProvider>(context);
+
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: AppBar(
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [primerycolor, secondaryColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(14),
-                bottomRight: Radius.circular(14),
-              ),
-            ),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 4,
-          title: const Text(
-            "Member Profile",
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _resetProfile,
-              tooltip: 'Reset Profile',
-            ),
-            const SizedBox(width: 20)
-          ],
-        ),
+      appBar: CustomAppBar(
+        automaticallyImplyLeading: false,
+        title: "Create Member",
+        ActiononTap: () {},
+        centertitle: false,
+        icon: Icons.refresh,
+        primerycolor: primerycolor,
+        secondaryColor: secondaryColor,
       ),
       body: Column(
         children: [
-          // Scrollable content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Profile Image & Points
+                  // Profile Image & Points (UI unchanged)
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -134,23 +95,17 @@ class _AddmemberState extends State<Addmember> {
                         const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Total Points',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                              ),
-                            ),
+                            Text('Total Points',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey)),
                             SizedBox(height: 4),
-                            Text(
-                              '1,250',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0B3C86),
-                              ),
-                            ),
+                            Text('1,250',
+                                style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0B3C86))),
                           ],
                         )
                       ],
@@ -158,40 +113,34 @@ class _AddmemberState extends State<Addmember> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Personal Information Card
+                  // Personal Information
                   Card(
                     elevation: 3,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                        borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Personal Information',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0B3C86),
-                            ),
-                          ),
+                          const Text('Personal Information',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0B3C86))),
                           const Divider(height: 24),
                           TextField(
                             controller: _nameController,
                             decoration: const InputDecoration(
-                              labelText: 'Full Name',
-                              border: OutlineInputBorder(),
-                            ),
+                                labelText: 'Full Name',
+                                border: OutlineInputBorder()),
                           ),
                           const SizedBox(height: 16),
                           TextField(
                             controller: _membershipController,
                             decoration: const InputDecoration(
-                              labelText: 'Membership Number',
-                              border: OutlineInputBorder(),
-                            ),
+                                labelText: 'Membership Number',
+                                border: OutlineInputBorder()),
                           ),
                         ],
                       ),
@@ -199,48 +148,41 @@ class _AddmemberState extends State<Addmember> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Organization Information Card
+                  // Organization Information
                   Card(
                     elevation: 3,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                        borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Organization Information',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0B3C86),
-                            ),
-                          ),
+                          const Text('Organization Information',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0B3C86))),
                           const Divider(height: 24),
                           TextField(
                             controller: _divisionController,
                             decoration: const InputDecoration(
-                              labelText: 'Division',
-                              border: OutlineInputBorder(),
-                            ),
+                                labelText: 'Division',
+                                border: OutlineInputBorder()),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: _stateController,
                             decoration: const InputDecoration(
-                              labelText: 'State',
-                              border: OutlineInputBorder(),
-                            ),
+                                labelText: 'State',
+                                border: OutlineInputBorder()),
                           ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: _positionController,
                             decoration: const InputDecoration(
-                              labelText: 'Position',
-                              border: OutlineInputBorder(),
-                            ),
+                                labelText: 'Position',
+                                border: OutlineInputBorder()),
                           ),
                         ],
                       ),
@@ -249,25 +191,21 @@ class _AddmemberState extends State<Addmember> {
 
                   const SizedBox(height: 16),
 
-                  // Social Media Card
+                  // Social Media
                   Card(
                     elevation: 3,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                        borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Social Media',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0B3C86),
-                            ),
-                          ),
+                          const Text('Social Media',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0B3C86))),
                           const Divider(height: 24),
                           _buildEditableSocialRow(
                               'Facebook',
@@ -290,22 +228,32 @@ class _AddmemberState extends State<Addmember> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 16),
                 ],
               ),
             ),
           ),
 
-          // Sticky Bottom Buttons
+          // Bottom Save Button
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Member Added successfully')),
-                );
-              },
+              onPressed: addMemberProvider.isLoading
+                  ? null
+                  : () async {
+                      await addMemberProvider.addMember(
+                        context: context,
+                        name: _nameController.text.trim(),
+                        membershipNumber: _membershipController.text.trim(),
+                        division: _divisionController.text.trim(),
+                        state: _stateController.text.trim(),
+                        position: _positionController.text.trim(),
+                        facebook: _facebookController.text.trim(),
+                        instagram: _instagramController.text.trim(),
+                        twitter: _twitterController.text.trim(),
+                        whatsapp: _whatsappController.text.trim(),
+                      );
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0B3C86),
                 foregroundColor: Colors.white,
@@ -315,7 +263,9 @@ class _AddmemberState extends State<Addmember> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Save Member'),
+              child: addMemberProvider.isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Save Member'),
             ),
           ),
         ],

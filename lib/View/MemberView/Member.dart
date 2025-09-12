@@ -1,8 +1,10 @@
 import 'package:adminapp/Constents/Colors.dart';
-import 'package:adminapp/View/MemberView/AddMember.dart';
-import 'package:adminapp/View/MemberView/MemberProfile.dart';
+import 'package:adminapp/Provider/MembersProvider.dart';
+import 'package:adminapp/Routes/routes.dart';
 import 'package:adminapp/Widgets/CustomCard.dart';
+import 'package:adminapp/Widgets/appbar.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class MemberPage extends StatefulWidget {
   const MemberPage({super.key});
@@ -12,87 +14,33 @@ class MemberPage extends StatefulWidget {
 }
 
 class _MemberPageState extends State<MemberPage> {
-  final List<Map<String, dynamic>> members = [
-    {
-      "name": "John Doe",
-      "membershipCode": "M123",
-      "division": "North",
-      "points": 120
-    },
-    {
-      "name": "Jane Smith",
-      "membershipCode": "M124",
-      "division": "South",
-      "points": 90
-    },
-    {
-      "name": "Zakir",
-      "membershipCode": "M343",
-      "division": "West",
-      "points": 130
-    },
-    {
-      "name": "Nasir Khan",
-      "membershipCode": "M984",
-      "division": "South",
-      "points": 70
-    },
-    // Add more members here
-  ];
-
-  List<Map<String, dynamic>> filteredMembers = [];
+  String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
-    filteredMembers = List.from(members); // Initially show all members
-  }
 
-  void _filterMembers(String query) {
-    final filtered = members.where((member) {
-      final nameLower = member["name"].toString().toLowerCase();
-      final codeLower = member["membershipCode"].toString().toLowerCase();
-      final queryLower = query.toLowerCase();
-      return nameLower.contains(queryLower) || codeLower.contains(queryLower);
-    }).toList();
-
-    setState(() {
-      filteredMembers = filtered;
+    // Fetch members after first frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final memberProvider =
+          Provider.of<MemberProvider>(context, listen: false);
+      memberProvider.fetchMembers();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final memberProvider = Provider.of<MemberProvider>(context);
+    final filteredMembers = memberProvider.filterMembers(_searchQuery);
+
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: AppBar(
-          automaticallyImplyLeading: false,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [primerycolor, secondaryColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(14),
-                bottomRight: Radius.circular(14),
-              ),
-            ),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 4,
-          title: const Text(
-            "Members",
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          centerTitle: true,
-        ),
+      appBar: CustomAppBar(
+        automaticallyImplyLeading: false,
+        title: "Members",
+        ActiononTap: () {},
+        centertitle: true,
+        primerycolor: primerycolor,
+        secondaryColor: secondaryColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -110,67 +58,64 @@ class _MemberPageState extends State<MemberPage> {
                 filled: true,
                 fillColor: Colors.grey[200],
               ),
-              onChanged: _filterMembers,
+              onChanged: (val) {
+                setState(() {
+                  _searchQuery = val;
+                });
+              },
             ),
+            const SizedBox(height: 10),
 
             // Member List
             Expanded(
-              child: filteredMembers.isEmpty
-                  ? const Center(
-                      child: Text("No members found"),
-                    )
-                  : ListView.builder(
-                      itemCount: filteredMembers.length,
-                      itemBuilder: (context, index) {
-                        final member = filteredMembers[index];
-                        return CustomCard(
-                            title: member["name"],
-                            details: [
-                              "Code: ${member["membershipCode"]}",
-                              "Division: ${member["division"]}",
-                              "Points: ${member["points"]}"
-                            ],
-                            icons: const [Icons.remove_red_eye, Icons.qr_code],
-                            iconActions: [
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute<void>(
-                                    builder: (context) =>
-                                        const MemberProfileScreen(),
-                                  ),
-                                );
-                              },
-                              () {
-                                // QR action
-                              },
-                            ],
-                            iconColor:
-                                secondaryColor // optional, QR icon can use default
+              child: memberProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredMembers.isEmpty
+                      ? const Center(child: Text("No members found"))
+                      : ListView.builder(
+                          itemCount: filteredMembers.length,
+                          itemBuilder: (context, index) {
+                            final member = filteredMembers[index];
+                            return CustomCard(
+                              title: member["name"],
+                              details: [
+                                "Code: ${member["membershipCode"]}",
+                                "Division: ${member["division"]}",
+                                "Points: ${member["points"]}"
+                              ],
+                              icons: const [
+                                Icons.remove_red_eye,
+                                Icons.qr_code
+                              ],
+                              iconActions: [
+                                () {
+                                  debugPrint(
+                                      "Navigating with member data: $member");
+                                  Navigator.pushNamed(
+                                    context,
+                                    Routes.MemberProfileScreen,
+                                    arguments: member,
+                                  );
+                                },
+                                () {
+                                  // QR action (pass member["uniqueID"])
+                                },
+                              ],
+                              iconColor: secondaryColor,
                             );
-                      },
-                    ),
+                          },
+                        ),
             ),
           ],
         ),
       ),
-
-      // Floating Action Button
       floatingActionButton: FloatingActionButton(
         backgroundColor: primerycolor,
         shape: const CircleBorder(),
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (context) => const Addmember(),
-            ),
-          );
+          Navigator.pushNamed(context, Routes.Addmember);
         },
-        child: Icon(
-          Icons.add,
-          color: whiteColor,
-        ),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

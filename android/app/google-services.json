@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "828113347992",
+    "project_id": "community-pointsystem",
+    "storage_bucket": "community-pointsystem.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:828113347992:android:341aa903260ef97fe3b7ed",
+        "android_client_info": {
+          "package_name": "com.umno.adminapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnSxtRctaVKS-lcAiAGALXVXbM6ExBsyY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

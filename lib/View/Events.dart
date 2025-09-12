@@ -312,7 +312,9 @@ class _EventsPageState extends State<EventsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
+      appBar:
+      
+       PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: AppBar(
           automaticallyImplyLeading: false,
