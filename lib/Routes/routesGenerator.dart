@@ -21,9 +21,17 @@ class RouteGenerator {
 
       case Routes.MemberPage:
         return MaterialPageRoute(builder: (_) => const MemberPage());
+//  final args = settings.arguments as Map<String, dynamic>;
+//         return MaterialPageRoute(
+//             builder: (_) => ComplaintViewer(
+//                   complaintId: args['complaintId'],
+//                 ));
 
       case Routes.MemberProfileScreen:
-        return MaterialPageRoute(builder: (_) => const MemberProfileScreen());
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute(
+          builder: (_) => MemberProfileScreen(memberData: args),
+        );
 
       case Routes.DashboardScreen:
         return MaterialPageRoute(builder: (_) => const DashboardScreen());

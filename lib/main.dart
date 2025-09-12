@@ -1,6 +1,7 @@
 import 'package:adminapp/Provider/AddMemberProvider.dart';
 import 'package:adminapp/Provider/LoginProvider.dart';
 import 'package:adminapp/Provider/MembersProvider.dart';
+import 'package:adminapp/Provider/eventProvider.dart';
 import 'package:adminapp/Routes/routes.dart';
 import 'package:adminapp/Routes/routesGenerator.dart';
 import 'package:adminapp/firebase_options.dart';
@@ -17,6 +18,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => LoginProvider()),
         ChangeNotifierProvider(create: (_) => AddMemberProvider()),
         ChangeNotifierProvider(create: (_) => MemberProvider()),
+        ChangeNotifierProvider(create: (_) => EventProvider()),
       ],
       child: const MyApp(),
     ),

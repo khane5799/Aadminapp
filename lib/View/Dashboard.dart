@@ -4,6 +4,7 @@ import 'package:adminapp/View/MemberView/Member.dart';
 import 'package:adminapp/View/Summery.dart';
 import 'package:adminapp/Widgets/appbar.dart';
 import 'package:adminapp/Widgets/statcard.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -17,15 +18,53 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
+  int totalMembers = 0;
+  int totalEvents = 0;
+  Map<String, dynamic>? todaysEvent;
+
   void _onTap(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    fetchDashboardData();
+  }
+
+  Future<void> fetchDashboardData() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    // Fetch members count
+    final membersSnapshot = await firestore.collection('Members').get();
+    totalMembers = membersSnapshot.docs.length;
+
+    // Fetch events
+    final eventsSnapshot = await firestore.collection('events').get();
+    totalEvents = eventsSnapshot.docs.length;
+
+    final today = DateTime.now();
+
+    // Find today's event
+    for (var doc in eventsSnapshot.docs) {
+      final data = doc.data();
+      final eventDate = (data['date'] as Timestamp).toDate();
+      if (eventDate.year == today.year &&
+          eventDate.month == today.month &&
+          eventDate.day == today.day) {
+        todaysEvent = data;
+        break; // Take the first event of today
+      }
+    }
+
+    setState(() {});
+  }
+
   // List of pages for each tab
   late final List<Widget> _pages = [
-    const DashboardPage(),
+    const DashboardPageWidget(),
     const MemberPage(),
     const EventsPage(),
     const SummaryPage(),
@@ -34,7 +73,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Only show AppBar on Dashboard tab
       appBar: _selectedIndex == 0
           ? CustomAppBar(
               automaticallyImplyLeading: false,
@@ -44,38 +82,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               primerycolor: primerycolor,
               secondaryColor: secondaryColor,
             )
-          // ? PreferredSize(
-          //     preferredSize: const Size.fromHeight(50),
-          //     child: AppBar(
-          //       automaticallyImplyLeading: false,
-          //       flexibleSpace: Container(
-          //         decoration: BoxDecoration(
-          //           gradient: LinearGradient(
-          //             colors: [primerycolor, secondaryColor],
-          //             begin: Alignment.topLeft,
-          //             end: Alignment.bottomRight,
-          //           ),
-          //           borderRadius: const BorderRadius.only(
-          //             bottomLeft: Radius.circular(14),
-          //             bottomRight: Radius.circular(14),
-          //           ),
-          //         ),
-          //       ),
-          //       backgroundColor: Colors.transparent,
-          //       elevation: 4,
-          //       title: Text(
-          //         "Dashboard",
-          //         style: TextStyle(
-          //           fontSize: 22,
-          //           fontWeight: FontWeight.bold,
-          //           color: whiteColor,
-          //         ),
-          //       ),
-          //       centerTitle: true,
-          //     ),
-          //   )
           : null,
-      body: _pages[_selectedIndex],
+      body: _selectedIndex == 0
+          ? DashboardPageWidget(
+              totalMembers: totalMembers,
+              totalEvents: totalEvents,
+              todaysEvent: todaysEvent,
+            )
+          : _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: primerycolor,
         currentIndex: _selectedIndex,
@@ -94,18 +108,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ---------------- Pages -----------------
+// ---------------- Dashboard Page Widget -----------------
 
-// Dashboard Page
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+class DashboardPageWidget extends StatelessWidget {
+  final int totalMembers;
+  final int totalEvents;
+  final Map<String, dynamic>? todaysEvent;
+
+  const DashboardPageWidget({
+    super.key,
+    this.totalMembers = 0,
+    this.totalEvents = 0,
+    this.todaysEvent,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // Latest Event Card
+          // Today's Event Card
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Card(
@@ -117,32 +139,43 @@ class DashboardPage extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Latest Event",
+                        const Text("Today's Event",
                             style: TextStyle(fontSize: 16, color: Colors.grey)),
-                        SizedBox(height: 6),
-                        Text("Tech Meetup 2025",
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 6),
-                        Text("Attendance: 150",
-                            style:
-                                TextStyle(fontSize: 14, color: Colors.black87)),
+                        const SizedBox(height: 6),
+                        Text(
+                          todaysEvent != null
+                              ? todaysEvent!['name'] ?? 'No Name'
+                              : "No Event Today",
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        // const SizedBox(height: 6),
+                        // Text(
+                        //   todaysEvent != null
+                        //       ? "Attendance: ${todaysEvent!['attendance'] ?? 'N/A'}"
+                        //       : "",
+                        //   style: const TextStyle(
+                        //       fontSize: 14, color: Colors.black87),
+                        // ),
                       ],
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.green[100],
+                        color: todaysEvent != null
+                            ? Colors.green[100]
+                            : Colors.grey[300],
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        "Ongoing",
+                      child: Text(
+                        todaysEvent != null ? "Ongoing" : "No Event",
                         style: TextStyle(
-                          color: Colors.green,
+                          color:
+                              todaysEvent != null ? Colors.green : Colors.grey,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -162,18 +195,20 @@ class DashboardPage extends StatelessWidget {
                 Expanded(
                   child: StatCard(
                     title: "Members",
-                    value: "120",
+                    value: "$totalMembers",
                     icon: Icons.people,
                     iconColor: primerycolor,
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
-                    child: StatCard(
-                        title: "Events",
-                        value: "45",
-                        icon: Icons.event,
-                        iconColor: Color(0xFFFF9800))),
+                Expanded(
+                  child: StatCard(
+                    title: "Events",
+                    value: "$totalEvents",
+                    icon: Icons.event,
+                    iconColor: const Color(0xFFFF9800),
+                  ),
+                ),
                 const SizedBox(width: 10),
                 const Expanded(
                     child: StatCard(
@@ -200,7 +235,11 @@ class DashboardPage extends StatelessWidget {
                   child: BarChart(
                     BarChartData(
                       alignment: BarChartAlignment.spaceAround,
-                      maxY: 160,
+                      maxY: (totalMembers > totalEvents
+                                  ? totalMembers
+                                  : totalEvents)
+                              .toDouble() +
+                          10,
                       barTouchData: BarTouchData(enabled: true),
                       titlesData: FlTitlesData(
                         show: true,
@@ -236,11 +275,13 @@ class DashboardPage extends StatelessWidget {
                       barGroups: [
                         BarChartGroupData(x: 0, barRods: [
                           BarChartRodData(
-                              toY: 120, color: const Color(0xFF4CAF50))
+                              toY: totalMembers.toDouble(),
+                              color: const Color(0xFF4CAF50))
                         ]),
                         BarChartGroupData(x: 1, barRods: [
                           BarChartRodData(
-                              toY: 45, color: const Color(0xFFFF9800))
+                              toY: totalEvents.toDouble(),
+                              color: const Color(0xFFFF9800))
                         ]),
                         BarChartGroupData(x: 2, barRods: [
                           BarChartRodData(
@@ -258,15 +299,3 @@ class DashboardPage extends StatelessWidget {
     );
   }
 }
-
-// // Summary Page
-// class SummaryPage extends StatelessWidget {
-//   const SummaryPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Center(
-//       child: Text("Summary Page Content", style: TextStyle(fontSize: 22)),
-//     );
-//   }
-// }

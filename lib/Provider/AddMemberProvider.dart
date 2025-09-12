@@ -1,7 +1,8 @@
 import 'dart:math';
+
+import 'package:adminapp/Widgets/FlutterToast.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:adminapp/Widgets/FlutterToast.dart';
 
 class AddMemberProvider extends ChangeNotifier {
   bool _isLoading = false;
@@ -42,7 +43,7 @@ class AddMemberProvider extends ChangeNotifier {
         "membershipNumber": membershipNumber,
         "division": division,
         "state": state,
-        "points":0,
+        "points": 0,
         "position": position,
         "facebook": facebook,
         "instagram": instagram,

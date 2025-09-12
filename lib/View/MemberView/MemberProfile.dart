@@ -4,7 +4,8 @@ import 'package:adminapp/Constents/Colors.dart';
 import 'package:flutter/material.dart';
 
 class MemberProfileScreen extends StatefulWidget {
-  const MemberProfileScreen({super.key});
+  final Map<String, dynamic> memberData;
+  const MemberProfileScreen({super.key, required this.memberData});
 
   @override
   State<MemberProfileScreen> createState() => _MemberProfileScreenState();
@@ -13,20 +14,39 @@ class MemberProfileScreen extends StatefulWidget {
 class _MemberProfileScreenState extends State<MemberProfileScreen> {
   File? _profileImage;
 
-  // Controllers with dummy data
-  final _nameController = TextEditingController(text: "John Doe");
-  final _membershipController = TextEditingController(text: "M-2025-001");
-  final _divisionController = TextEditingController(text: "North Division");
-  final _stateController = TextEditingController(text: "California");
-  final _positionController = TextEditingController(text: "Team Leader");
+  // Controllers
+  final _nameController = TextEditingController();
+  final _membershipController = TextEditingController();
+  final _divisionController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _positionController = TextEditingController();
+  final _facebookController = TextEditingController();
+  final _instagramController = TextEditingController();
+  final _twitterController = TextEditingController();
+  final _whatsappController = TextEditingController();
 
-  // Social controllers with dummy data
-  final _facebookController =
-      TextEditingController(text: "facebook.com/johndoe");
-  final _instagramController =
-      TextEditingController(text: "instagram.com/johndoe");
-  final _twitterController = TextEditingController(text: "x.com");
-  final _whatsappController = TextEditingController(text: "+1 987 654 3210");
+  @override
+  void initState() {
+    super.initState();
+    _populateControllers(); // Populate controllers immediately
+  }
+
+  void _populateControllers() {
+    final data = widget.memberData;
+
+    _nameController.text = data['name']?.toString() ?? '';
+    _membershipController.text = data['membershipNumber']?.toString() ??
+        data['membershipCode']?.toString() ??
+        '';
+    _divisionController.text = data['division']?.toString() ?? '';
+    _stateController.text = data['state']?.toString() ?? '';
+    _positionController.text = data['position']?.toString() ?? '';
+    _facebookController.text = data['facebook']?.toString() ?? '';
+    _instagramController.text = data['instagram']?.toString() ?? '';
+    _twitterController.text = data['twitter']?.toString() ?? '';
+    _whatsappController.text = data['whatsapp']?.toString() ?? '';
+    setState(() {}); // Update UI
+  }
 
   @override
   void dispose() {
@@ -45,20 +65,14 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   void _resetProfile() {
     setState(() {
       _profileImage = null;
-      _nameController.clear();
-      _membershipController.clear();
-      _divisionController.clear();
-      _stateController.clear();
-      _positionController.clear();
-      _facebookController.clear();
-      _instagramController.clear();
-      _twitterController.clear();
-      _whatsappController.clear();
+      _populateControllers();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final data = widget.memberData;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
@@ -98,7 +112,6 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
       ),
       body: Column(
         children: [
-          // Scrollable content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
@@ -133,10 +146,10 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                           ),
                         ),
                         const SizedBox(width: 30),
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Total Points',
                               style: TextStyle(
                                 fontSize: 18,
@@ -144,10 +157,10 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                                 color: Colors.grey,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
-                              '1,250',
-                              style: TextStyle(
+                              '${data['points'] ?? 0}',
+                              style: const TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF0B3C86),
@@ -159,7 +172,6 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   // Personal Information Card
                   Card(
                     elevation: 3,
@@ -200,7 +212,6 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   // Organization Information Card
                   Card(
                     elevation: 3,
@@ -248,9 +259,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
                   // Social Media Card
                   Card(
                     elevation: 3,
@@ -292,14 +301,53 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 16),
+                  // Additional Information
+                  // Card(
+                  //   elevation: 3,
+                  //   shape: RoundedRectangleBorder(
+                  //     borderRadius: BorderRadius.circular(12),
+                  //   ),
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.all(16.0),
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         const Text(
+                  //           'Additional Information',
+                  //           style: TextStyle(
+                  //             fontSize: 18,
+                  //             fontWeight: FontWeight.bold,
+                  //             color: Color(0xFF0B3C86),
+                  //           ),
+                  //         ),
+                  //         const Divider(height: 24),
+                  //         ListTile(
+                  //           leading: const Icon(Icons.fingerprint,
+                  //               color: Color(0xFF0B3C86)),
+                  //           title: const Text('Unique ID'),
+                  //           subtitle: Text(data['uniqueID'] ?? 'N/A'),
+                  //         ),
+                  //         ListTile(
+                  //           leading: const Icon(Icons.calendar_today,
+                  //               color: Color(0xFF0B3C86)),
+                  //           title: const Text('Member Since'),
+                  //           subtitle: Text(
+                  //             data['createdAt'] != null
+                  //                 ? '${(data['createdAt'] as dynamic).toDate()}'
+                  //                     .split(' ')[0]
+                  //                 : 'N/A',
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
           ),
-
-          // Sticky Bottom Buttons
+          // Bottom Buttons
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(

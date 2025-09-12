@@ -24,8 +24,7 @@ class FlushbarHelper {
     );
   }
 
-
-    static void showError(String message, BuildContext context) {
+  static void showError(String message, BuildContext context) {
     showFlushbar(
       context: context,
       flushbar: Flushbar(
@@ -39,8 +38,8 @@ class FlushbarHelper {
         duration: const Duration(seconds: 3),
         backgroundColor: Colors.red,
         positionOffset: 20,
-        title: "Success",
-        icon: const Icon(Icons.check_circle, color: Colors.white),
+        title: "Error",
+        icon: const Icon(Icons.error, color: Colors.white),
         messageColor: Colors.white,
       )..show(context),
     );
