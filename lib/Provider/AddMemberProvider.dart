@@ -51,6 +51,7 @@ class AddMemberProvider extends ChangeNotifier {
         "whatsapp": whatsapp,
         "uniqueID": uniqueID,
         "createdAt": DateTime.now(),
+        'photoUrl': '',
       };
 
       await FirebaseFirestore.instance

@@ -1,7 +1,9 @@
-import 'dart:io';
-
 import 'package:adminapp/Constents/Colors.dart';
+import 'package:adminapp/Provider/memberProfileProvider.dart';
+import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class MemberProfileScreen extends StatefulWidget {
   final Map<String, dynamic> memberData;
@@ -12,7 +14,43 @@ class MemberProfileScreen extends StatefulWidget {
 }
 
 class _MemberProfileScreenState extends State<MemberProfileScreen> {
-  File? _profileImage;
+  final _picker = ImagePicker();
+  final _cloudinary = CloudinaryPublic('dhpq5ao2s', 'flutter_profiles',
+      cache: false); //where are these values?
+
+  bool _isUploading = false;
+  String photoUrl = '';
+
+  Future<void> _pickAndUpload() async {
+    final XFile? picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80);
+    if (picked == null) return;
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      final res = await _cloudinary.uploadFile(
+        CloudinaryFile.fromFile(picked.path,
+            resourceType: CloudinaryResourceType.Image, folder: 'profile_pics'),
+      );
+      setState(() {
+        photoUrl = res.secureUrl; // <-- store this in your DB / user profile
+      });
+      // Optionally: save photoUrl to Firestore or your backend here.
+    } on CloudinaryException catch (e) {
+      debugPrint('Cloudinary error: ${e.message}');
+      // handle error (show toast)
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
+  }
 
   // Controllers
   final _nameController = TextEditingController();
@@ -28,6 +66,9 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   @override
   void initState() {
     super.initState();
+    photoUrl = widget.memberData['photoUrl']?.toString() ?? '';
+    debugPrint("🔥 __________photoUrl received:______________ $photoUrl");
+    debugPrint("🔥 MemberData received: ${widget.memberData}");
     _populateControllers(); // Populate controllers immediately
   }
 
@@ -46,6 +87,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     _twitterController.text = data['twitter']?.toString() ?? '';
     _whatsappController.text = data['whatsapp']?.toString() ?? '';
     setState(() {}); // Update UI
+    debugPrint("Populating with data: $data");
   }
 
   @override
@@ -64,9 +106,27 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
 
   void _resetProfile() {
     setState(() {
-      _profileImage = null;
       _populateControllers();
     });
+  }
+
+  Future<void> _updateProfile() async {
+    final provider = Provider.of<MemberProfileProvider>(context, listen: false);
+
+    final uniqueID = widget.memberData['uniqueID']?.toString() ?? '';
+    provider.updateMemberProfile(
+      context: context,
+      uniqueID: uniqueID,
+      name: _nameController.text.trim(),
+      memberShipNumber: _membershipController.text.trim(),
+      division: _divisionController.text.trim(),
+      state: _stateController.text.trim(),
+      position: _positionController.text.trim(),
+      facebook: _facebookController.text.trim(),
+      instagram: _instagramController.text.trim(),
+      twitter: _twitterController.text.trim(),
+      whatsapp: _whatsappController.text.trim(),
+    );
   }
 
   @override
@@ -123,26 +183,34 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         GestureDetector(
-                          onTap: () {},
+                          onTap: _pickAndUpload,
                           child: CircleAvatar(
                             radius: 50,
-                            backgroundImage: _profileImage != null
-                                ? FileImage(_profileImage!)
+                            backgroundImage: (!_isUploading &&
+                                    photoUrl.isNotEmpty)
+                                ? NetworkImage(photoUrl)
                                 : const AssetImage('assets/images/women.jpg')
                                     as ImageProvider,
                             backgroundColor: Colors.grey[300],
-                            child: const Align(
-                              alignment: Alignment.bottomRight,
-                              child: CircleAvatar(
-                                radius: 14,
-                                backgroundColor: Colors.white,
-                                child: Icon(
-                                  Icons.edit,
-                                  size: 16,
-                                  color: Color(0xFF0B3C86),
-                                ),
-                              ),
-                            ),
+                            child: _isUploading
+                                ? const CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color(
+                                            0xFF0B3C86)), // ✅ your primerycolor
+                                  )
+                                : const Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: Colors.white,
+                                      child: Icon(
+                                        Icons.edit,
+                                        size: 16,
+                                        color: Color(0xFF0B3C86),
+                                      ),
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 30),
@@ -323,14 +391,14 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                   //         ),
                   //         const Divider(height: 24),
                   //         ListTile(
-                  //           leading: const Icon(Icons.fingerprint,
-                  //               color: Color(0xFF0B3C86)),
+                  //           leading:  Icon(Icons.fingerprint,
+                  //               color: primerycolor),
                   //           title: const Text('Unique ID'),
                   //           subtitle: Text(data['uniqueID'] ?? 'N/A'),
                   //         ),
                   //         ListTile(
-                  //           leading: const Icon(Icons.calendar_today,
-                  //               color: Color(0xFF0B3C86)),
+                  //           leading:  Icon(Icons.calendar_today,
+                  //               color: primerycolor),
                   //           title: const Text('Member Since'),
                   //           subtitle: Text(
                   //             data['createdAt'] != null
@@ -354,11 +422,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Profile Saved!')),
-                      );
-                    },
+                    onPressed: _updateProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0B3C86),
                       foregroundColor: Colors.white,

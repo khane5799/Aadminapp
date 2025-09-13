@@ -8,14 +8,13 @@ class MemberProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-void _setLoading(bool val) {
-  _isLoading = val;
-  // Delay notifyListeners until after build
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    notifyListeners();
-  });
-}
-
+  void _setLoading(bool val) {
+    _isLoading = val;
+    // Delay notifyListeners until after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+  }
 
   /// Fetch members from Firestore
   Future<void> fetchMembers() async {
@@ -29,10 +28,18 @@ void _setLoading(bool val) {
         final data = doc.data();
         return {
           "name": data["name"] ?? "",
-          "membershipCode": data["membershipNumber"] ?? "",
+          "membershipNumber": data["membershipNumber"] ?? "",
           "division": data["division"] ?? "",
+          "position": data["position"] ?? "",
           "points": data["points"] ?? 0,
+          "photoUrl": data["photoUrl"] ?? 0,
           "uniqueID": data["uniqueID"] ?? "",
+          "createdAt": data["createdAt"] ?? "",
+          "facebook": data["facebook"] ?? "",
+          "instagram": data["instagram"] ?? "",
+          "state": data["state"] ?? "",
+          "twitter": data["twitter"] ?? "",
+          "whatsapp": data["whatsapp"] ?? "",
         };
       }).toList();
     } catch (e) {

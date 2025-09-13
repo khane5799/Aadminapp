@@ -81,7 +81,10 @@ class _MemberPageState extends State<MemberPage> {
             // Member List
             Expanded(
               child: memberProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(
+                      color: primerycolor,
+                    ))
                   : filteredMembers.isEmpty
                       ? const Center(child: Text("No members found"))
                       : ListView.builder(
