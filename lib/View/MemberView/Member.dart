@@ -7,6 +7,7 @@ import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/Provider/MembersProvider.dart';
 import 'package:adminapp/Routes/routes.dart';
 import 'package:adminapp/Widgets/CustomCard.dart';
+import 'package:adminapp/Widgets/FlutterToast.dart';
 import 'package:adminapp/Widgets/appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -94,7 +95,7 @@ class _MemberPageState extends State<MemberPage> {
                             return CustomCard(
                               title: member["name"],
                               details: [
-                                "Code: ${member["membershipCode"]}",
+                                "Code: ${member["membershipNumber"]}",
                                 "Division: ${member["division"]}",
                                 "Points: ${member["points"]}"
                               ],
@@ -103,14 +104,28 @@ class _MemberPageState extends State<MemberPage> {
                                 Icons.qr_code
                               ],
                               iconActions: [
-                                () {
+                                () async {
                                   debugPrint(
                                       "Navigating with member data: $member");
-                                  Navigator.pushNamed(
+                                  final result = await Navigator.pushNamed(
                                     context,
                                     Routes.MemberProfileScreen,
                                     arguments: member,
                                   );
+
+                                  if (result == true) {
+                                    // Refresh members after update
+                                    FlushbarHelper.showSuccess(
+                                        "Profile Updated successfully",
+                                        context);
+                                    await memberProvider.fetchMembers();
+                                  }
+
+                                  // Navigator.pushNamed(
+                                  //   context,
+                                  //   Routes.MemberProfileScreen,
+                                  //   arguments: member,
+                                  // );
                                 },
                                 () {
                                   // Show QR Code dialog

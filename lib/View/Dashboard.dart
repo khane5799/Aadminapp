@@ -1,5 +1,6 @@
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/View/Events.dart';
+import 'package:adminapp/View/JoinRequests.dart';
 import 'package:adminapp/View/MemberView/Member.dart';
 import 'package:adminapp/View/Summery.dart';
 import 'package:adminapp/Widgets/appbar.dart';
@@ -46,7 +47,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     totalEvents = eventsSnapshot.docs.length;
 
     final today = DateTime.now();
-
     // Find today's event
     for (var doc in eventsSnapshot.docs) {
       final data = doc.data();
@@ -66,6 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late final List<Widget> _pages = [
     const DashboardPageWidget(),
     const MemberPage(),
+    const JoinRequests(),
     const EventsPage(),
     const SummaryPage(),
   ];
@@ -99,6 +100,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           BottomNavigationBarItem(
               icon: Icon(Icons.dashboard), label: "Dashboard"),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: "Members"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.link), label: "Join Requests"),
           BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),
           BottomNavigationBarItem(
               icon: Icon(Icons.bar_chart), label: "Summary"),
@@ -285,7 +288,7 @@ class DashboardPageWidget extends StatelessWidget {
                         ]),
                         BarChartGroupData(x: 2, barRods: [
                           BarChartRodData(
-                              toY: 12, color: const Color(0xFF2196F3))
+                              toY: 3, color: const Color(0xFF2196F3))
                         ]),
                       ],
                     ),
