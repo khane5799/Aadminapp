@@ -1,14 +1,26 @@
+import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/Widgets/FlutterToast.dart';
 import 'package:adminapp/Widgets/appbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
-class JoinRequests extends StatelessWidget {
+class JoinRequests extends StatefulWidget {
   const JoinRequests({super.key});
 
+  @override
+  State<JoinRequests> createState() => _JoinRequestsState();
+}
+
+class _JoinRequestsState extends State<JoinRequests> {
   /// ✅ Generate Unique ID
   String generateUniqueID() {
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
@@ -40,12 +52,91 @@ class JoinRequests extends StatelessWidget {
     return "UMNO$newNumber";
   }
 
+  Future<void> showMemberQrDialog(BuildContext context, String membername,
+      String membershipNumber, Color primerycolor) async {
+    final qrKey = GlobalKey();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          contentPadding: const EdgeInsets.all(20),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "QR Code for $membername",
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: 180,
+                  height: 180,
+                  child: RepaintBoundary(
+                    key: qrKey,
+                    child: QrImageView(
+                      data: membershipNumber,
+                      version: QrVersions.auto,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.share, color: Colors.white),
+                  label: const Text(
+                    "Share",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primerycolor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () async {
+                    try {
+                      // Get QR widget boundary
+                      RenderRepaintBoundary boundary = qrKey.currentContext!
+                          .findRenderObject() as RenderRepaintBoundary;
+                      var image = await boundary.toImage(pixelRatio: 3.0);
+
+                      // Convert to byte data
+                      ByteData? byteData = await image.toByteData(
+                          format: ui.ImageByteFormat.png);
+                      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                      // Save to temp directory
+                      final tempDir = await getTemporaryDirectory();
+                      final file =
+                          await File('${tempDir.path}/qr.png').create();
+                      await file.writeAsBytes(pngBytes);
+
+                      // Share image file
+                      await Share.shareXFiles([XFile(file.path)],
+                          text: "QR Code of $membername");
+                    } catch (e) {
+                      debugPrint("Error sharing QR image: $e");
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   /// ✅ Update status + Add member if approved
   Future<void> _updateStatus(
     String docId,
     String status,
     Map<String, dynamic> data,
-    BuildContext context,
   ) async {
     try {
       final uniqueID = generateUniqueID();
@@ -78,24 +169,28 @@ class JoinRequests extends StatelessWidget {
 
         await membersRef.doc(uniqueID).set(memberData);
 
-        // Show QR dialog reliably after member is added
+        // Use State's context
+        if (!mounted) return;
+        await showMemberQrDialog(
+          context,
+          memberData["name"],
+          memberData["membershipNumber"],
+          primerycolor,
+        );
       }
 
-      // Show flushbar success
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        FlushbarHelper.showSuccess(
-          status == "approved"
-              ? "✅ Application Approved & Member Added"
-              : "❌ Application Rejected",
-          context,
-        );
-      });
+      if (!mounted) return;
+      FlushbarHelper.showSuccess(
+        status == "approved"
+            ? "✅ Application Approved & Member Added"
+            : "❌ Application Rejected",
+        context,
+      );
     } catch (e, st) {
       print("❌ ERROR in _updateStatus: $e");
       print(st);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        FlushbarHelper.showError("⚠️ Failed to update status: $e", context);
-      });
+      if (!mounted) return;
+      FlushbarHelper.showError("⚠️ Failed to update status: $e", context);
     }
   }
 
@@ -245,7 +340,6 @@ class JoinRequests extends StatelessWidget {
                                     doc.id,
                                     "approved",
                                     data,
-                                    context,
                                   );
                                 },
                                 icon: const Icon(Icons.check_circle, size: 18),
@@ -271,7 +365,6 @@ class JoinRequests extends StatelessWidget {
                                     doc.id,
                                     "rejected",
                                     data,
-                                    context,
                                   );
                                 },
                                 icon: const Icon(Icons.cancel, size: 18),
@@ -300,3 +393,11 @@ class JoinRequests extends StatelessWidget {
     );
   }
 }
+
+
+
+  // ElevatedButton(
+  //             onPressed: () {
+  //               showMemberQrDialog(context, "Ehsan", "12345", primerycolor);
+  //             },
+  //             child: const Text("data")),
