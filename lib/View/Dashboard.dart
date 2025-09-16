@@ -2,7 +2,7 @@ import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/View/Events.dart';
 import 'package:adminapp/View/JoinRequests.dart';
 import 'package:adminapp/View/MemberView/Member.dart';
-import 'package:adminapp/View/Summery.dart';
+import 'package:adminapp/View/Summery/Summery.dart';
 import 'package:adminapp/Widgets/appbar.dart';
 import 'package:adminapp/Widgets/statcard.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

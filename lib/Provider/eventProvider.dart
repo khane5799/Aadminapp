@@ -13,50 +13,64 @@ class EventProvider extends ChangeNotifier {
     fetchEvents();
   }
 
+  /// Add a new event and store its Firestore UID inside the document
   Future<void> addEvent(Map<String, dynamic> event) async {
-    // Save to Firestore
-    await eventsCollection.add({
-      "name": event["name"],
-      "day": event["day"],
-      "date": event["date"],
-      "startTime": event["startTime"],
-      "endTime": event["endTime"],
-    });
+    try {
+      // Create a new document reference (auto-generated UID)
+      final docRef = eventsCollection.doc();
 
-    await fetchEvents();
+      // Save event with UID included
+      await docRef.set({
+        "uid": docRef.id, // store the UID inside the document
+        "name": event["name"],
+        "day": event["day"],
+        "points": event["points"],
+        "date": event["date"],
+        "startTime": event["startTime"],
+        "endTime": event["endTime"],
+      });
+
+      await fetchEvents(); // Refresh the lists
+    } catch (e) {
+      debugPrint("❌ Error adding event: $e");
+    }
   }
 
   Future<void> fetchEvents() async {
-    final snapshot = await eventsCollection.get();
-    activeEvents = [];
-    upcomingEvents = [];
-    expiredEvents = [];
+    try {
+      final snapshot = await eventsCollection.get();
+      activeEvents = [];
+      upcomingEvents = [];
+      expiredEvents = [];
 
-    final today = DateTime.now();
+      final today = DateTime.now();
 
-    for (var doc in snapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final DateTime eventDate = (data["date"] as Timestamp).toDate();
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final DateTime eventDate = (data["date"] as Timestamp).toDate();
 
-      if (isSameDate(eventDate, today)) {
-        activeEvents.add({
-          ...data,
-          "status": "active",
-        });
-      } else if (eventDate.isAfter(today)) {
-        upcomingEvents.add({
-          ...data,
-          "status": "upcoming",
-        });
-      } else {
-        expiredEvents.add({
-          ...data,
-          "status": "expired",
-        });
+        if (isSameDate(eventDate, today)) {
+          activeEvents.add({
+            ...data,
+            "status": "active",
+          });
+        } else if (eventDate.isAfter(today)) {
+          upcomingEvents.add({
+            ...data,
+            "status": "upcoming",
+          });
+        } else {
+          expiredEvents.add({
+            ...data,
+            "status": "expired",
+          });
+        }
       }
-    }
 
-    notifyListeners();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("❌ Error fetching events: $e");
+    }
   }
 
   bool isSameDate(DateTime a, DateTime b) {

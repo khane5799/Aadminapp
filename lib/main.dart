@@ -21,6 +21,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => MemberProvider()),
         ChangeNotifierProvider(create: (_) => EventProvider()),
         ChangeNotifierProvider(create: (_) => MemberProfileProvider()),
+        // ChangeNotifierProvider(create: (_) => JoinRequestsProvider()),
       ],
       child: const MyApp(),
     ),
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Attendance Point System',
+      title: 'Community Points System',
       // home: ProfileImageUploader(),
       initialRoute: Routes.login,
       onGenerateRoute: RouteGenerator.generateRoute,

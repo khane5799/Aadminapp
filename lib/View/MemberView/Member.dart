@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:ui';
 
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/Provider/MembersProvider.dart';
@@ -16,7 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-// Declare a global key
+// Global key for QR
 final GlobalKey qrKey = GlobalKey();
 
 class MemberPage extends StatefulWidget {
@@ -32,8 +31,6 @@ class _MemberPageState extends State<MemberPage> {
   @override
   void initState() {
     super.initState();
-
-    // Fetch members after first frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final memberProvider =
           Provider.of<MemberProvider>(context, listen: false);
@@ -59,25 +56,29 @@ class _MemberPageState extends State<MemberPage> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            // Search Field
-            TextField(
-              decoration: InputDecoration(
-                hintText: "Search by Name or ID",
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide.none,
+            // Search Field with elevation and rounded corners
+            Material(
+              elevation: 2,
+              borderRadius: BorderRadius.circular(12),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: "Search by Name or ID",
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
                 ),
-                filled: true,
-                fillColor: Colors.grey[200],
+                onChanged: (val) {
+                  setState(() {
+                    _searchQuery = val;
+                  });
+                },
               ),
-              onChanged: (val) {
-                setState(() {
-                  _searchQuery = val;
-                });
-              },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
             // Member List
             Expanded(
@@ -87,12 +88,18 @@ class _MemberPageState extends State<MemberPage> {
                       color: primerycolor,
                     ))
                   : filteredMembers.isEmpty
-                      ? const Center(child: Text("No members found"))
+                      ? const Center(
+                          child: Text(
+                            "No members found",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        )
                       : ListView.builder(
                           itemCount: filteredMembers.length,
                           itemBuilder: (context, index) {
                             final member = filteredMembers[index];
                             return CustomCard(
+                              profileImageUrl: member["photoUrl"],
                               title: member["name"],
                               details: [
                                 "Code: ${member["membershipNumber"]}",
@@ -105,8 +112,6 @@ class _MemberPageState extends State<MemberPage> {
                               ],
                               iconActions: [
                                 () async {
-                                  debugPrint(
-                                      "Navigating with member data: $member");
                                   final result = await Navigator.pushNamed(
                                     context,
                                     Routes.MemberProfileScreen,
@@ -114,120 +119,14 @@ class _MemberPageState extends State<MemberPage> {
                                   );
 
                                   if (result == true) {
-                                    // Refresh members after update
                                     FlushbarHelper.showSuccess(
-                                        "Profile Updated successfully",
+                                        "Profile updated successfully",
                                         context);
                                     await memberProvider.fetchMembers();
                                   }
-
-                                  // Navigator.pushNamed(
-                                  //   context,
-                                  //   Routes.MemberProfileScreen,
-                                  //   arguments: member,
-                                  // );
                                 },
                                 () {
-                                  // Show QR Code dialog
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) {
-                                      return AlertDialog(
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16)),
-                                        contentPadding:
-                                            const EdgeInsets.all(20),
-                                        content: SingleChildScrollView(
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                  "QR Code for ${member["name"]}",
-                                                  style: const TextStyle(
-                                                      fontSize: 18,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              const SizedBox(height: 20),
-                                              SizedBox(
-                                                width: 180,
-                                                height: 180,
-                                                child: RepaintBoundary(
-                                                  key: qrKey,
-                                                  child: QrImageView(
-                                                    data: member[
-                                                        "membershipCode"],
-                                                    version: QrVersions.auto,
-                                                    backgroundColor:
-                                                        Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                              const SizedBox(height: 20),
-                                              ElevatedButton.icon(
-                                                icon: const Icon(Icons.share,
-                                                    color: Colors.white),
-                                                label: const Text(
-                                                  "Share",
-                                                  style: TextStyle(
-                                                      color: Colors.white),
-                                                ),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: primerycolor,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                  ),
-                                                ),
-                                                onPressed: () async {
-                                                  try {
-                                                    // Get QR widget boundary
-                                                    RenderRepaintBoundary
-                                                        boundary = qrKey
-                                                                .currentContext!
-                                                                .findRenderObject()
-                                                            as RenderRepaintBoundary;
-                                                    ui.Image image =
-                                                        await boundary.toImage(
-                                                            pixelRatio: 3.0);
-
-                                                    // Convert to byte data
-                                                    ByteData? byteData =
-                                                        await image.toByteData(
-                                                            format: ui
-                                                                .ImageByteFormat
-                                                                .png);
-                                                    Uint8List pngBytes =
-                                                        byteData!.buffer
-                                                            .asUint8List();
-
-                                                    // Save to temp directory
-                                                    final tempDir =
-                                                        await getTemporaryDirectory();
-                                                    final file = await File(
-                                                            '${tempDir.path}/qr.png')
-                                                        .create();
-                                                    await file
-                                                        .writeAsBytes(pngBytes);
-
-                                                    // Share image file
-                                                    await Share.shareXFiles(
-                                                        [XFile(file.path)],
-                                                        text:
-                                                            "QR Code of ${member["name"]}");
-                                                  } catch (e) {
-                                                    debugPrint(
-                                                        "Error sharing QR image: $e");
-                                                  }
-                                                },
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
+                                  _showQrDialog(member);
                                 },
                               ],
                               iconColor: secondaryColor,
@@ -246,6 +145,88 @@ class _MemberPageState extends State<MemberPage> {
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),
+    );
+  }
+
+  // Enhanced QR Dialog
+  void _showQrDialog(Map<String, dynamic> member) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("QR Code for ${member["name"]}",
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      colors: [
+                        primerycolor.withOpacity(0.2),
+                        secondaryColor.withOpacity(0.2)
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: RepaintBoundary(
+                    key: qrKey,
+                    child: QrImageView(
+                      data: member["membershipNumber"],
+                      version: QrVersions.auto,
+                      backgroundColor: Colors.white,
+                      size: 200,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.share, color: Colors.white),
+                  label: const Text("Share QR Code",
+                      style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primerycolor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 20),
+                  ),
+                  onPressed: () async {
+                    try {
+                      RenderRepaintBoundary boundary = qrKey.currentContext!
+                          .findRenderObject() as RenderRepaintBoundary;
+                      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+                      ByteData? byteData = await image.toByteData(
+                          format: ui.ImageByteFormat.png);
+                      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                      final tempDir = await getTemporaryDirectory();
+                      final file =
+                          await File('${tempDir.path}/qr.png').create();
+                      await file.writeAsBytes(pngBytes);
+
+                      await Share.shareXFiles([XFile(file.path)],
+                          text: "QR Code of ${member["name"]}");
+                    } catch (e) {
+                      debugPrint("Error sharing QR image: $e");
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

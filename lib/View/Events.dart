@@ -1,9 +1,20 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'dart:ui';
+
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/Provider/eventProvider.dart';
 import 'package:adminapp/Widgets/CustomCard.dart';
 import 'package:adminapp/Widgets/FlutterToast.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+
+final GlobalKey qrKey = GlobalKey();
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -17,6 +28,7 @@ class _EventsPageState extends State<EventsPage>
   late TabController _tabController;
 
   final TextEditingController _eventNameController = TextEditingController();
+  final TextEditingController _eventPointController = TextEditingController();
   DateTime? _selectedDate;
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
@@ -29,6 +41,40 @@ class _EventsPageState extends State<EventsPage>
     Provider.of<EventProvider>(context, listen: false).fetchEvents();
   }
 
+  // Widget _buildEventCard(Map<String, dynamic> event) {
+  //   CardStatus initialStatus;
+  //   switch (event["status"]) {
+  //     case "active":
+  //       initialStatus = CardStatus.active;
+  //       break;
+  //     case "upcoming":
+  //       initialStatus = CardStatus.upcoming;
+  //       break;
+  //     case "expired":
+  //       initialStatus = CardStatus.expired;
+  //       break;
+  //     default:
+  //       initialStatus = CardStatus.active;
+  //   }
+
+  //   return CustomCard(
+  //     title: event["name"]!,
+  //     details: [
+  //       "Day: ${event["day"]}",
+  //       "Date: ${_formatDate(event["date"].toDate())}",
+  //       "Start: ${_formatTime(event["startTime"].toDate())}",
+  //       "End: ${_formatTime(event["endTime"].toDate())}",
+  //     ],
+  //     icons: const [Icons.qr_code],
+  //     iconActions: [() {}],
+  //     iconColor: primerycolor,
+  //     showStatusSelector: true,
+  //     initialStatus: initialStatus,
+  //     onStatusChanged: (status) {
+  //       print("Selected: $status");
+  //     },
+  //   );
+  // }
   Widget _buildEventCard(Map<String, dynamic> event) {
     CardStatus initialStatus;
     switch (event["status"]) {
@@ -45,16 +91,93 @@ class _EventsPageState extends State<EventsPage>
         initialStatus = CardStatus.active;
     }
 
-        return CustomCard(
-          title: event["name"]!,
-          details: [
-            "Day: ${event["day"]}",
-            "Date: ${_formatDate(event["date"].toDate())}",
-            "Start: ${_formatTime(event["startTime"].toDate())}",
-            "End: ${_formatTime(event["endTime"].toDate())}",
+    return CustomCard(
+      title: event["name"]!,
+      details: [
+        "Day: ${event["day"]}",
+        "Date: ${_formatDate(event["date"].toDate())}",
+        "Start: ${_formatTime(event["startTime"].toDate())}",
+        "End: ${_formatTime(event["endTime"].toDate())}",
       ],
       icons: const [Icons.qr_code],
-      iconActions: [() {}],
+      iconActions: [
+        () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                contentPadding: const EdgeInsets.all(20),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text("Event QR Code",
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: 180,
+                        height: 180,
+                        child: RepaintBoundary(
+                          key: qrKey,
+                          child: QrImageView(
+                            data: event["uid"],
+                            version: QrVersions.auto,
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.share, color: Colors.white),
+                        label: const Text(
+                          "Share",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primerycolor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () async {
+                          try {
+                            // Get QR widget boundary
+                            RenderRepaintBoundary boundary =
+                                qrKey.currentContext!.findRenderObject()
+                                    as RenderRepaintBoundary;
+                            ui.Image image =
+                                await boundary.toImage(pixelRatio: 3.0);
+
+                            // Convert to byte data
+                            ByteData? byteData = await image.toByteData(
+                                format: ui.ImageByteFormat.png);
+                            Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+                            // Save to temp directory
+                            final tempDir = await getTemporaryDirectory();
+                            final file =
+                                await File('${tempDir.path}/qr.png').create();
+                            await file.writeAsBytes(pngBytes);
+
+                            // Share image file
+                            await Share.shareXFiles([XFile(file.path)],
+                                text: "");
+                          } catch (e) {
+                            debugPrint("Error sharing QR image: $e");
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        }
+      ],
       iconColor: primerycolor,
       showStatusSelector: true,
       initialStatus: initialStatus,
@@ -112,6 +235,16 @@ class _EventsPageState extends State<EventsPage>
                     controller: _eventNameController,
                     decoration: InputDecoration(
                       labelText: "Event Name",
+                      prefixIcon: const Icon(Icons.event),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: _eventPointController,
+                    decoration: InputDecoration(
+                      labelText: "Event Points",
                       prefixIcon: const Icon(Icons.event),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10)),
@@ -227,7 +360,7 @@ class _EventsPageState extends State<EventsPage>
                       const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: () async {
-                          // Validate fields
+                          // Validate required fields
                           if (_eventNameController.text.isEmpty ||
                               _selectedDate == null ||
                               _startTime == null ||
@@ -257,8 +390,15 @@ class _EventsPageState extends State<EventsPage>
                             _endTime!.minute,
                           );
 
+                          // 👇 Apply default value if empty
+                          final int eventPoints = _eventPointController
+                                  .text.isEmpty
+                              ? 10
+                              : int.tryParse(_eventPointController.text) ?? 10;
+
                           final newEvent = {
                             "name": _eventNameController.text,
+                            "points": eventPoints, // ✅ Store points here
                             "day": _getDayName(_selectedDate!.weekday),
                             "date": _selectedDate,
                             "startTime": startDateTime,
@@ -275,6 +415,7 @@ class _EventsPageState extends State<EventsPage>
 
                           Navigator.pop(context);
                           _eventNameController.clear();
+                          _eventPointController.clear();
                           _selectedDate = null;
                           _startTime = null;
                           _endTime = null;

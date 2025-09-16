@@ -7,7 +7,7 @@ import 'package:adminapp/View/Login.dart';
 import 'package:adminapp/View/MemberView/AddMember.dart';
 import 'package:adminapp/View/MemberView/Member.dart';
 import 'package:adminapp/View/MemberView/MemberProfile.dart';
-import 'package:adminapp/View/Summery.dart';
+import 'package:adminapp/View/Summery/Summery.dart';
 import 'package:flutter/material.dart';
 
 class RouteGenerator {

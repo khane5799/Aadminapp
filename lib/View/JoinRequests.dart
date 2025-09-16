@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-
 import 'package:adminapp/Constents/Colors.dart';
+import 'package:adminapp/Widgets/BlurBackground.dart';
 import 'package:adminapp/Widgets/FlutterToast.dart';
 import 'package:adminapp/Widgets/appbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -139,17 +139,26 @@ class _JoinRequestsState extends State<JoinRequests> {
     Map<String, dynamic> data,
   ) async {
     try {
+      // show loader
+      showGeneralDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withOpacity(0.3),
+        transitionDuration: const Duration(milliseconds: 200),
+        pageBuilder: (_, __, ___) {
+          return const BlurryLoader();
+        },
+      );
+
       final uniqueID = generateUniqueID();
       final membershipNumber = await getNextMembershipNumber();
 
-      // Update application status
       await FirebaseFirestore.instance
           .collection("membershipApplications")
           .doc(docId)
           .update({"status": status});
 
       if (status == "approved") {
-        // Add member
         final membersRef = FirebaseFirestore.instance.collection("Members");
         final memberData = {
           "uniqueID": uniqueID,
@@ -159,24 +168,55 @@ class _JoinRequestsState extends State<JoinRequests> {
           "position": data["position"] ?? "",
           "state": data["state"] ?? "",
           "division": data["division"] ?? "",
+          "referralPoints": 0,
           "points": data["points"] ?? 0,
           "facebook": data["facebook"] ?? "",
           "instagram": data["instagram"] ?? "",
           "twitter": data["twitter"] ?? "",
           "whatsapp": data["whatsapp"] ?? "",
           "createdAt": DateTime.now(),
+          "referral": data["referral"] ?? "",
         };
 
         await membersRef.doc(uniqueID).set(memberData);
 
-        // Use State's context
+        // ✅ Handle referral reward
+        final referralNumber = data["referral"];
+        if (referralNumber != null && referralNumber.toString().isNotEmpty) {
+          final refSnapshot = await membersRef
+              .where("membershipNumber", isEqualTo: referralNumber)
+              .limit(1)
+              .get();
+
+          if (refSnapshot.docs.isNotEmpty) {
+            final refDoc = refSnapshot.docs.first;
+            final refUniqueID = refDoc["uniqueID"];
+            final refPoints = (refDoc["points"] ?? 0) + 10;
+            final referralPoints = (refDoc["referralPoints"] ?? 0) + 10;
+
+            await membersRef.doc(refUniqueID).update({
+              "points": refPoints,
+              "referralPoints": referralPoints,
+            });
+
+            print(
+                "🎉 Referral reward: $refUniqueID got +10 points (Total: $refPoints)");
+          } else {
+            print("⚠️ Referral membershipNumber $referralNumber not found.");
+          }
+        }
+
         if (!mounted) return;
+        Navigator.of(context).pop(); // ✅ remove loader
         await showMemberQrDialog(
           context,
           memberData["name"],
           memberData["membershipNumber"],
           primerycolor,
         );
+      } else {
+        if (!mounted) return;
+        Navigator.of(context).pop(); // ✅ remove loader
       }
 
       if (!mounted) return;
@@ -190,6 +230,7 @@ class _JoinRequestsState extends State<JoinRequests> {
       print("❌ ERROR in _updateStatus: $e");
       print(st);
       if (!mounted) return;
+      Navigator.of(context).pop(); // ✅ remove loader if error
       FlushbarHelper.showError("⚠️ Failed to update status: $e", context);
     }
   }
@@ -393,11 +434,3 @@ class _JoinRequestsState extends State<JoinRequests> {
     );
   }
 }
-
-
-
-  // ElevatedButton(
-  //             onPressed: () {
-  //               showMemberQrDialog(context, "Ehsan", "12345", primerycolor);
-  //             },
-  //             child: const Text("data")),

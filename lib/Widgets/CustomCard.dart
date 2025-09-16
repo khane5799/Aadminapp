@@ -5,12 +5,12 @@ enum CardStatus { active, upcoming, expired }
 
 class CustomCard extends StatefulWidget {
   final String title;
-  final List<String> details; // e.g., ["Code: M123", "Division: North"]
-  final List<IconData>? icons; // optional list of icons for actions
-  final List<VoidCallback>? iconActions; // actions for each icon
-  final Color? iconColor; // optional color for icons
+  final List<String> details;
+  final List<IconData>? icons;
+  final List<VoidCallback>? iconActions;
+  final Color? iconColor;
+  final String? profileImageUrl;
 
-  // NEW: radio button options
   final bool showStatusSelector;
   final CardStatus? initialStatus;
   final ValueChanged<CardStatus>? onStatusChanged;
@@ -22,6 +22,7 @@ class CustomCard extends StatefulWidget {
     this.icons,
     this.iconActions,
     this.iconColor,
+    this.profileImageUrl,
     this.showStatusSelector = false,
     this.initialStatus,
     this.onStatusChanged,
@@ -51,28 +52,53 @@ class _CustomCardState extends State<CustomCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Row for title and icons
+            // Row for avatar + title/details + icons
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment:
+                  CrossAxisAlignment.center, // center vertically
               children: [
+                // Optional profile picture or default icon
+                if (widget.profileImageUrl != null &&
+                    widget.profileImageUrl!.isNotEmpty) ...[
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundImage: NetworkImage(widget.profileImageUrl!),
+                  ),
+                  const SizedBox(width: 12),
+                ] else ...[
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.grey.shade300,
+                    child: Icon(Icons.person,
+                        size: 28, color: Colors.grey.shade700),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+
                 // Title + Details
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment:
+                        MainAxisAlignment.center, // center content vertically
+                    children: [
+                      Text(
+                        widget.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                    ...widget.details.map((d) => Text(d)),
-                  ],
+                      const SizedBox(height: 4),
+                      ...widget.details.map((d) => Text(d)),
+                    ],
+                  ),
                 ),
 
                 // Icons
                 if (widget.icons != null && widget.icons!.isNotEmpty)
                   Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // center icons
                     children: List.generate(widget.icons!.length, (index) {
                       return IconButton(
                         icon: Icon(
@@ -89,7 +115,7 @@ class _CustomCardState extends State<CustomCard> {
               ],
             ),
 
-            // Optional radio buttons
+            // Optional radio buttons for status
             if (widget.showStatusSelector) ...[
               const SizedBox(height: 10),
               Row(

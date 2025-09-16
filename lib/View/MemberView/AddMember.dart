@@ -24,6 +24,7 @@ class _AddmemberState extends State<Addmember> {
   final _positionController = TextEditingController();
 
   final _facebookController = TextEditingController();
+  final _tikTokController = TextEditingController();
   final _instagramController = TextEditingController();
   final _twitterController = TextEditingController();
   final _whatsappController = TextEditingController();
@@ -212,6 +213,9 @@ class _AddmemberState extends State<Addmember> {
                               _facebookController,
                               "assets/images/Facebook.jpg"),
                           const SizedBox(height: 12),
+                          _buildEditableSocialRow('TikTok', _tikTokController,
+                              "assets/images/Tiktok.jpg"),
+                          const SizedBox(height: 12),
                           _buildEditableSocialRow(
                               'Instagram',
                               _instagramController,
@@ -249,6 +253,7 @@ class _AddmemberState extends State<Addmember> {
                         state: _stateController.text.trim(),
                         position: _positionController.text.trim(),
                         facebook: _facebookController.text.trim(),
+                        tikTok: _tikTokController.text.trim(),
                         instagram: _instagramController.text.trim(),
                         twitter: _twitterController.text.trim(),
                         whatsapp: _whatsappController.text.trim(),
