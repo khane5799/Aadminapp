@@ -1,5 +1,6 @@
 class Routes {
-  static const String login = '/';
+  static const String Splashscreen = '/';
+  static const String login = '/login';
   static const String Addmember = '/Addmember';
   static const String MemberPage = '/MemberPage';
   static const String MemberProfileScreen = '/MemberProfileScreen';

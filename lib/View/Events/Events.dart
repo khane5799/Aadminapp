@@ -5,10 +5,12 @@ import 'dart:ui';
 
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/Provider/eventProvider.dart';
+import 'package:adminapp/View/Events/EventCustomeButton.dart';
 import 'package:adminapp/Widgets/CustomCard.dart';
 import 'package:adminapp/Widgets/FlutterToast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -41,40 +43,51 @@ class _EventsPageState extends State<EventsPage>
     Provider.of<EventProvider>(context, listen: false).fetchEvents();
   }
 
-  // Widget _buildEventCard(Map<String, dynamic> event) {
-  //   CardStatus initialStatus;
-  //   switch (event["status"]) {
-  //     case "active":
-  //       initialStatus = CardStatus.active;
-  //       break;
-  //     case "upcoming":
-  //       initialStatus = CardStatus.upcoming;
-  //       break;
-  //     case "expired":
-  //       initialStatus = CardStatus.expired;
-  //       break;
-  //     default:
-  //       initialStatus = CardStatus.active;
-  //   }
+  IconData? getEventIcon(String name) {
+    final lower = name.toLowerCase();
 
-  //   return CustomCard(
-  //     title: event["name"]!,
-  //     details: [
-  //       "Day: ${event["day"]}",
-  //       "Date: ${_formatDate(event["date"].toDate())}",
-  //       "Start: ${_formatTime(event["startTime"].toDate())}",
-  //       "End: ${_formatTime(event["endTime"].toDate())}",
-  //     ],
-  //     icons: const [Icons.qr_code],
-  //     iconActions: [() {}],
-  //     iconColor: primerycolor,
-  //     showStatusSelector: true,
-  //     initialStatus: initialStatus,
-  //     onStatusChanged: (status) {
-  //       print("Selected: $status");
-  //     },
-  //   );
-  // }
+    if (lower.contains("meeting") || lower.contains("conference")) {
+      return Icons.people;
+    } else if (lower.contains("sports") ||
+        lower.contains("match") ||
+        lower.contains("tournament")) {
+      return Icons.sports_soccer;
+    } else if (lower.contains("dinner") ||
+        lower.contains("lunch") ||
+        lower.contains("party")) {
+      return Icons.restaurant;
+    } else if (lower.contains("workshop") ||
+        lower.contains("training") ||
+        lower.contains("class")) {
+      return Icons.school;
+    } else if (lower.contains("concert") ||
+        lower.contains("music") ||
+        lower.contains("festival")) {
+      return Icons.music_note;
+    } else if (lower.contains("award") ||
+        lower.contains("ceremony") ||
+        lower.contains("celebration")) {
+      return Icons.emoji_events;
+    } else if (lower.contains("charity") || lower.contains("fundraiser")) {
+      return Icons.volunteer_activism;
+    } else if (lower.contains("religious") ||
+        lower.contains("prayer") ||
+        lower.contains("church") ||
+        lower.contains("mosque")) {
+      return Icons.church; // closest Flutter has
+    } else if (lower.contains("tech") ||
+        lower.contains("hackathon") ||
+        lower.contains("seminar")) {
+      return Icons.computer;
+    } else if (lower.contains("holiday") ||
+        lower.contains("trip") ||
+        lower.contains("tour")) {
+      return Icons.flight_takeoff;
+    }
+
+    return null; // 👈 means no match found
+  }
+
   Widget _buildEventCard(Map<String, dynamic> event) {
     CardStatus initialStatus;
     switch (event["status"]) {
@@ -90,14 +103,18 @@ class _EventsPageState extends State<EventsPage>
       default:
         initialStatus = CardStatus.active;
     }
+    String formatTime(DateTime dateTime) {
+      return DateFormat("ha").format(dateTime).replaceAll(":00", "");
+    }
 
     return CustomCard(
+      initials: event["name"][0]!,
       title: event["name"]!,
       details: [
         "Day: ${event["day"]}",
         "Date: ${_formatDate(event["date"].toDate())}",
-        "Start: ${_formatTime(event["startTime"].toDate())}",
-        "End: ${_formatTime(event["endTime"].toDate())}",
+        "Start: ${formatTime(event["startTime"].toDate())}",
+        "End: ${formatTime(event["endTime"].toDate())}",
       ],
       icons: const [Icons.qr_code],
       iconActions: [
@@ -353,14 +370,17 @@ class _EventsPageState extends State<EventsPage>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel"),
+                      CustomButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        iconData: const Icon(Icons.cancel),
+                        buttonColor: Colors.red,
+                        buttonTitle: 'Cancel',
                       ),
                       const SizedBox(width: 12),
-                      ElevatedButton(
+                      CustomButton(
                         onPressed: () async {
-                          // Validate required fields
                           if (_eventNameController.text.isEmpty ||
                               _selectedDate == null ||
                               _startTime == null ||
@@ -420,10 +440,11 @@ class _EventsPageState extends State<EventsPage>
                           _startTime = null;
                           _endTime = null;
                         },
-                        child: isLoading
-                            ? CircularProgressIndicator(color: primerycolor)
-                            : const Text("Create"),
-                      ),
+                        iconData: const Icon(Icons.check),
+                        buttonColor: Colors.green,
+                        buttonTitle: 'Create',
+                        isLoading: isLoading,
+                      )
                     ],
                   ),
                 ],

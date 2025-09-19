@@ -10,6 +10,7 @@ class CustomCard extends StatefulWidget {
   final List<VoidCallback>? iconActions;
   final Color? iconColor;
   final String? profileImageUrl;
+  final String? initials; // New property for initials
 
   final bool showStatusSelector;
   final CardStatus? initialStatus;
@@ -23,6 +24,7 @@ class CustomCard extends StatefulWidget {
     this.iconActions,
     this.iconColor,
     this.profileImageUrl,
+    this.initials,
     this.showStatusSelector = false,
     this.initialStatus,
     this.onStatusChanged,
@@ -52,35 +54,17 @@ class _CustomCardState extends State<CustomCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Row for avatar + title/details + icons
             Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.center, // center vertically
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Optional profile picture or default icon
-                if (widget.profileImageUrl != null &&
-                    widget.profileImageUrl!.isNotEmpty) ...[
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundImage: NetworkImage(widget.profileImageUrl!),
-                  ),
-                  const SizedBox(width: 12),
-                ] else ...[
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Colors.grey.shade300,
-                    child: Icon(Icons.person,
-                        size: 28, color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(width: 12),
-                ],
+                _buildAvatar(), // Cleanly handle avatar cases
+                const SizedBox(width: 12),
 
                 // Title + Details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment:
-                        MainAxisAlignment.center, // center content vertically
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         widget.title,
@@ -95,10 +79,10 @@ class _CustomCardState extends State<CustomCard> {
                   ),
                 ),
 
-                // Icons
+                // Optional icons
                 if (widget.icons != null && widget.icons!.isNotEmpty)
                   Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // center icons
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(widget.icons!.length, (index) {
                       return IconButton(
                         icon: Icon(
@@ -115,7 +99,7 @@ class _CustomCardState extends State<CustomCard> {
               ],
             ),
 
-            // Optional radio buttons for status
+            // Optional radio buttons
             if (widget.showStatusSelector) ...[
               const SizedBox(height: 10),
               Row(
@@ -131,6 +115,69 @@ class _CustomCardState extends State<CustomCard> {
         ),
       ),
     );
+  }
+
+  // Avatar builder
+  Widget _buildAvatar() {
+    // Case 1: Network image
+    if (widget.profileImageUrl != null && widget.profileImageUrl!.isNotEmpty) {
+      return CircleAvatar(
+        radius: 25,
+        backgroundImage: NetworkImage(widget.profileImageUrl!),
+      );
+    }
+
+    // Case 2: Initials
+    if (widget.initials != null && widget.initials!.isNotEmpty) {
+      // Take first 2 letters safely
+      String initials = widget.initials!
+          .substring(
+            0,
+            widget.initials!.length >= 2 ? 2 : widget.initials!.length,
+          )
+          .toUpperCase();
+
+      // Generate a consistent color based on initials
+      Color bgColor = _getColorFromInitials(initials);
+
+      return CircleAvatar(
+        radius: 25,
+        backgroundColor: bgColor,
+        child: Text(
+          initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+      );
+    }
+
+    // Case 3: Default person icon
+    return CircleAvatar(
+      radius: 25,
+      backgroundColor: Colors.grey.shade300,
+      child: Icon(Icons.person, size: 28, color: Colors.grey.shade700),
+    );
+  }
+
+  /// Generate a color from initials so it varies per user
+  Color _getColorFromInitials(String initials) {
+    // Simple hashing: sum char codes
+    int hash = initials.codeUnits.fold(0, (prev, elem) => prev + elem);
+    // Pick a color from a list
+    List<Color> colors = [
+      Colors.blue,
+      Colors.red,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.indigo,
+      Colors.brown,
+    ];
+    return colors[hash % colors.length];
   }
 
   Widget _buildRadio(String label, CardStatus status) {

@@ -2,12 +2,13 @@
 
 import 'package:adminapp/Routes/routes.dart';
 import 'package:adminapp/View/Dashboard.dart';
-import 'package:adminapp/View/Events.dart';
+import 'package:adminapp/View/Events/Events.dart';
 import 'package:adminapp/View/Login.dart';
 import 'package:adminapp/View/MemberView/AddMember.dart';
 import 'package:adminapp/View/MemberView/Member.dart';
 import 'package:adminapp/View/MemberView/MemberProfile.dart';
 import 'package:adminapp/View/Summery/Summery.dart';
+import 'package:adminapp/View/splashScreen.dart';
 import 'package:flutter/material.dart';
 
 class RouteGenerator {
@@ -15,6 +16,8 @@ class RouteGenerator {
     switch (settings.name) {
       case Routes.login:
         return MaterialPageRoute(builder: (_) => const LoginPage());
+      case Routes.Splashscreen:
+        return MaterialPageRoute(builder: (_) => const Splashscreen());
 
       case Routes.Addmember:
         return MaterialPageRoute(builder: (_) => const Addmember());

@@ -67,6 +67,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          cursorColor: Colors.white,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             prefixIcon:
@@ -96,6 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
+                          cursorColor: Colors.white,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             prefixIcon:
@@ -165,7 +167,10 @@ class _LoginPageState extends State<LoginPage> {
                                 ? const CircularProgressIndicator(
                                     color: Colors.white,
                                   )
-                                : const Text("Login"),
+                                : Text(
+                                    "Login",
+                                    style: TextStyle(color: primerycolor),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 20),

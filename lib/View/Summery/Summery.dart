@@ -1,11 +1,12 @@
 import 'dart:ui';
 
 import 'package:adminapp/Constents/Colors.dart';
-import 'package:adminapp/View/Summery/EventListPage.dart';
+import 'package:adminapp/View/Summery/EventsList.dart';
 import 'package:adminapp/Widgets/appbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 
 class SummaryPage extends StatefulWidget {
   const SummaryPage({super.key});
@@ -16,14 +17,83 @@ class SummaryPage extends StatefulWidget {
 
 class _SummaryPageState extends State<SummaryPage>
     with TickerProviderStateMixin {
-  final Map<String, int> eventsPerMonth = {
-    "Jan": 5,
-    "Feb": 3,
-    "Mar": 7,
-    "Apr": 6,
-    "May": 4,
-    "Jun": 5,
-  };
+  Map<String, int> eventsPerMonth = {};
+
+  Future<void> fetchEventsPerMonth() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection("events").get();
+
+    Map<String, int> monthlyCount = {
+      "Jan": 0,
+      "Feb": 0,
+      "Mar": 0,
+      "Apr": 0,
+      "May": 0,
+      "Jun": 0,
+      "Jul": 0,
+      "Aug": 0,
+      "Sep": 0,
+      "Oct": 0,
+      "Nov": 0,
+      "Dec": 0,
+    };
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      if (data["date"] != null) {
+        DateTime eventDate;
+
+        if (data["date"] is Timestamp) {
+          eventDate = (data["date"] as Timestamp).toDate();
+        } else if (data["date"] is DateTime) {
+          eventDate = data["date"];
+        } else {
+          continue; // skip invalid date
+        }
+
+        final monthName = _getMonthName(eventDate.month);
+        monthlyCount[monthName] = (monthlyCount[monthName] ?? 0) + 1;
+      }
+    }
+
+    setState(() {
+      //here is showing the above exception
+      eventsPerMonth = monthlyCount;
+    });
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ];
+    return months[month - 1];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchEventsPerMonth();
+  }
+
+  // final Map<String, int> eventsPerMonth = {
+  //   "Jan": 5,
+  //   "Feb": 3,
+  //   "Mar": 7,
+  //   "Apr": 6,
+  //   "May": 4,
+  //   "Jun": 5,
+  // };
 
   // 🔹 Firestore Queries
   Future<List<Map<String, dynamic>>> getTopOverall() async {
@@ -96,7 +166,7 @@ class _SummaryPageState extends State<SummaryPage>
               future: getTopOverall(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: _buildShimmerTopMembersCard());
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Text("No data found");
@@ -109,7 +179,7 @@ class _SummaryPageState extends State<SummaryPage>
               future: getTopReferrals(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: _buildShimmerTopMembersCard());
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Text("No data found");
@@ -122,7 +192,7 @@ class _SummaryPageState extends State<SummaryPage>
               future: getTopEventPoints(), // 🔹 pass your eventId here
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(child: _buildShimmerTopMembersCard());
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Text("No data found");
@@ -141,13 +211,74 @@ class _SummaryPageState extends State<SummaryPage>
     );
   }
 
-  Widget _buildEventCard() {
-    final dummyEvents = [
-      {"name": "Culture Night", "attendees": 2000},
-      {"name": "Sports Day", "attendees": 1500},
-      {"name": "Tech Expo", "attendees": 1200},
-    ];
+  Widget _buildShimmerTopMembersCard() {
+    return SizedBox(
+      height: 160,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: 5,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          return Shimmer.fromColors(
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade100,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: Container(
+                  width: 160,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        primerycolor.withOpacity(0.5),
+                        secondaryColor.withOpacity(0.5),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.grey.shade300,
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        height: 14,
+                        width: 80,
+                        color: Colors.grey.shade300,
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        height: 12,
+                        width: 50,
+                        color: Colors.grey.shade300,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
+  Widget _buildEventCard() {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -276,18 +407,34 @@ class _SummaryPageState extends State<SummaryPage>
         itemBuilder: (context, index) {
           final member = members[index];
           Color avatarColor;
-          switch (index) {
+          switch (index % 8) {
+            // use modulo to loop over 8 colors
             case 0:
-              avatarColor = Colors.amber.shade400;
+              avatarColor = Colors.blue;
               break;
             case 1:
-              avatarColor = Colors.grey.shade400;
+              avatarColor = Colors.red;
               break;
             case 2:
-              avatarColor = Colors.red.shade400;
+              avatarColor = Colors.green;
+              break;
+            case 3:
+              avatarColor = Colors.orange;
+              break;
+            case 4:
+              avatarColor = Colors.purple;
+              break;
+            case 5:
+              avatarColor = Colors.teal;
+              break;
+            case 6:
+              avatarColor = Colors.indigo;
+              break;
+            case 7:
+              avatarColor = Colors.brown;
               break;
             default:
-              avatarColor = Colors.blueGrey;
+              avatarColor = Colors.blueGrey; // fallback
           }
 
           return TweenAnimationBuilder(
@@ -408,6 +555,10 @@ class _SummaryPageState extends State<SummaryPage>
 
   // 🔹 Events Chart
   Widget _buildEventsChart() {
+    if (eventsPerMonth.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final maxY =
         (eventsPerMonth.values.reduce((a, b) => a > b ? a : b) + 2).toDouble();
     final barGroups = eventsPerMonth.entries.map((entry) {

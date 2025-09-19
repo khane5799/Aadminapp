@@ -5,6 +5,7 @@ import 'package:adminapp/Provider/eventProvider.dart';
 import 'package:adminapp/Provider/memberProfileProvider.dart';
 import 'package:adminapp/Routes/routes.dart';
 import 'package:adminapp/Routes/routesGenerator.dart';
+import 'package:adminapp/View/splashScreen.dart';
 import 'package:adminapp/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -35,8 +36,8 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Community Points System',
-      // home: ProfileImageUploader(),
-      initialRoute: Routes.login,
+      // home: Splashscreen(),
+      initialRoute: Routes.Splashscreen,
       onGenerateRoute: RouteGenerator.generateRoute,
     );
   }

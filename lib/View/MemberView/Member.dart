@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shimmer/shimmer.dart';
 
 // Global key for QR
 final GlobalKey qrKey = GlobalKey();
@@ -83,10 +84,7 @@ class _MemberPageState extends State<MemberPage> {
             // Member List
             Expanded(
               child: memberProvider.isLoading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                      color: primerycolor,
-                    ))
+                  ? Center(child: customCardShimmer())
                   : filteredMembers.isEmpty
                       ? const Center(
                           child: Text(
@@ -99,6 +97,7 @@ class _MemberPageState extends State<MemberPage> {
                           itemBuilder: (context, index) {
                             final member = filteredMembers[index];
                             return CustomCard(
+                              initials: member["name"][0],
                               profileImageUrl: member["photoUrl"],
                               title: member["name"],
                               details: [
@@ -221,6 +220,116 @@ class _MemberPageState extends State<MemberPage> {
                       debugPrint("Error sharing QR image: $e");
                     }
                   },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget customCardShimmer({int itemCount = 5}) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        return Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          elevation: 3,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 🔹 Avatar shimmer
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: const CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // 🔹 Title & Details shimmer
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Title
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Container(
+                          width: 140, // mimic title length
+                          height: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Detail 1
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Container(
+                          width: 100,
+                          height: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      // Detail 2
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Container(
+                          width: 120,
+                          height: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      // Detail 3
+                      Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Container(
+                          width: 80,
+                          height: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // 🔹 Icons shimmer
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(2, (_) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),

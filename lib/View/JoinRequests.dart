@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:ui';
+
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/Widgets/BlurBackground.dart';
 import 'package:adminapp/Widgets/FlutterToast.dart';
@@ -12,6 +14,7 @@ import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shimmer/shimmer.dart';
 
 class JoinRequests extends StatefulWidget {
   const JoinRequests({super.key});
@@ -287,6 +290,14 @@ class _JoinRequestsState extends State<JoinRequests> {
 
   @override
   Widget build(BuildContext context) {
+    Future<List<QueryDocumentSnapshot>> fetchPendingRequests() async {
+      final snapshot = await FirebaseFirestore.instance
+          .collection("membershipApplications")
+          .where("status", isEqualTo: "pending")
+          .get();
+      return snapshot.docs;
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: CustomAppBar(
@@ -296,140 +307,354 @@ class _JoinRequestsState extends State<JoinRequests> {
         primerycolor: primerycolor,
         secondaryColor: secondaryColor,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection("membershipApplications")
-            .where("status", isEqualTo: "pending")
-            .snapshots(),
+      body: FutureBuilder<List<QueryDocumentSnapshot>>(
+        future: fetchPendingRequests(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 5, // number of shimmer cards
+              itemBuilder: (context, index) => buildShimmerCard(),
+            );
           }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
               child: Text("No pending membership requests."),
             );
           }
 
-          final requests = snapshot.data!.docs;
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final doc = requests[index];
-              final data = doc.data() as Map<String, dynamic>;
-              final status = data["status"] ?? "pending";
+          final requests = snapshot.data!;
+          return RefreshIndicator(
+            onRefresh: () async {
+              // simply call setState to reload FutureBuilder
+              fetchPendingRequests();
+              setState(() {});
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: requests.length,
+              itemBuilder: (context, index) {
+                final doc = requests[index];
+                final data = doc.data() as Map<String, dynamic>;
+                final status = data["status"] ?? "pending";
 
-              return Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      /// Top Row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            data["name"] ?? "Unknown",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                return GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return Dialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Title row
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      data["name"] ?? "Unknown",
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    _statusBadge(status),
+                                  ],
+                                ),
+                                const Divider(height: 20, thickness: 1),
+
+                                // Scrollable details
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxHeight: 300),
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _infoRow(Icons.email,
+                                            data["email"] ?? "N/A"),
+                                        _infoRow(Icons.phone,
+                                            data["phone"] ?? "N/A"),
+                                        _infoRow(Icons.badge,
+                                            "ID: ${data["idCard"] ?? "N/A"}"),
+                                        _infoRow(Icons.cake,
+                                            "DOB: ${data["dob"] ?? "N/A"}"),
+                                        _infoRow(Icons.person,
+                                            "Gender: ${data["gender"] ?? "N/A"}"),
+                                        _infoRow(Icons.home,
+                                            "${data["address"] ?? ""}, ${data["city"] ?? ""}"),
+                                        _infoRow(Icons.markunread_mailbox,
+                                            "Postcode: ${data["postcode"] ?? ""}"),
+                                        _infoRow(Icons.map,
+                                            "State: ${data["state"] ?? ""}"),
+                                        _infoRow(Icons.work,
+                                            data["occupation"] ?? "N/A"),
+                                        _infoRow(Icons.star,
+                                            "Membership: ${data["membershipType"] ?? ""}"),
+                                        _infoRow(Icons.group,
+                                            "Referral: ${data["referral"]?.isNotEmpty == true ? data["referral"] : "None"}"),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // Action buttons
+                                if (status == "pending")
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: () async {
+                                            Navigator.of(context).pop();
+                                            await _updateStatus(
+                                                doc.id, "approved", data);
+                                            setState(() {}); // Refresh list
+                                          },
+                                          icon: const Icon(Icons.check_circle,
+                                              size: 18),
+                                          label: const Text("Approve"),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: () async {
+                                            Navigator.of(context).pop();
+                                            await _updateStatus(
+                                                doc.id, "rejected", data);
+                                            setState(() {}); // Refresh list
+                                          },
+                                          icon: const Icon(Icons.cancel,
+                                              size: 18),
+                                          label: const Text("Reject"),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primerycolor,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: const Text("Close"),
+                                  ),
+                              ],
                             ),
                           ),
-                          _statusBadge(status),
+                        );
+                      },
+                    );
+                  },
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Key info
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                data["name"] ?? "Unknown",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(Icons.email,
+                                      size: 18, color: Colors.blueGrey),
+                                  const SizedBox(width: 15),
+                                  Text(data["email"] ?? "N/A"),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.phone,
+                                      size: 18, color: Colors.blueGrey),
+                                  const SizedBox(width: 15),
+                                  Text(data["phone"] ?? "N/A"),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                "Tap for full details",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          // Status + Arrow
+                          Row(
+                            children: [
+                              _statusBadge(status),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward_ios,
+                                  size: 16, color: Colors.grey),
+                            ],
+                          ),
                         ],
                       ),
-                      const Divider(height: 20, thickness: 1),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-                      /// Applicant Info
-                      _infoRow(Icons.email, data["email"] ?? "N/A"),
-                      _infoRow(Icons.phone, data["phone"] ?? "N/A"),
-                      _infoRow(Icons.badge, "ID: ${data["idCard"] ?? "N/A"}"),
-                      _infoRow(Icons.cake, "DOB: ${data["dob"] ?? "N/A"}"),
-                      _infoRow(
-                          Icons.person, "Gender: ${data["gender"] ?? "N/A"}"),
-                      _infoRow(Icons.home,
-                          "${data["address"] ?? ""}, ${data["city"] ?? ""}"),
-                      _infoRow(Icons.markunread_mailbox,
-                          "Postcode: ${data["postcode"] ?? ""}"),
-                      _infoRow(Icons.map, "State: ${data["state"] ?? ""}"),
-                      _infoRow(Icons.work, data["occupation"] ?? "N/A"),
-                      _infoRow(Icons.star,
-                          "Membership: ${data["membershipType"] ?? ""}"),
-                      _infoRow(Icons.group,
-                          "Referral: ${data["referral"]?.isNotEmpty == true ? data["referral"] : "None"}"),
-
-                      const SizedBox(height: 16),
-
-                      /// Buttons
-                      if (status == "pending")
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  print(
-                                      "🟢 Approve button clicked for ${doc.id}");
-                                  await _updateStatus(
-                                    doc.id,
-                                    "approved",
-                                    data,
-                                  );
-                                },
-                                icon: const Icon(Icons.check_circle, size: 18),
-                                label: const Text("Approve"),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  print(
-                                      "🔴 Reject button clicked for ${doc.id}");
-                                  await _updateStatus(
-                                    doc.id,
-                                    "rejected",
-                                    data,
-                                  );
-                                },
-                                icon: const Icon(Icons.cancel, size: 18),
-                                label: const Text("Reject"),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+  Widget buildShimmerCard() {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 4,
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Key info
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Name placeholder
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade100,
+                  child: Container(
+                    width: 150,
+                    height: 20,
+                    color: Colors.white,
+                    margin: const EdgeInsets.only(bottom: 6),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Email row placeholder
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade100,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.email, size: 18, color: Colors.blueGrey),
+                      const SizedBox(width: 15),
+                      Container(
+                        width: 120,
+                        height: 14,
+                        color: Colors.white,
+                      ),
                     ],
                   ),
                 ),
-              );
-            },
-          );
-        },
+                const SizedBox(height: 2),
+                // Phone row placeholder
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade100,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.phone, size: 18, color: Colors.blueGrey),
+                      const SizedBox(width: 15),
+                      Container(
+                        width: 80,
+                        height: 14,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Tap for full details
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade100,
+                  child: Container(
+                    width: 120,
+                    height: 12,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            // Status + arrow
+            Row(
+              children: [
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade100,
+                  child: Container(
+                    width: 60,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade100,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
