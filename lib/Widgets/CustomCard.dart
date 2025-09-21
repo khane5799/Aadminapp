@@ -13,7 +13,7 @@ class CustomCard extends StatefulWidget {
   final String? initials; // New property for initials
 
   final bool showStatusSelector;
-  final CardStatus? initialStatus;
+  // final CardStatus? initialStatus;
   final ValueChanged<CardStatus>? onStatusChanged;
 
   const CustomCard({
@@ -26,7 +26,7 @@ class CustomCard extends StatefulWidget {
     this.profileImageUrl,
     this.initials,
     this.showStatusSelector = false,
-    this.initialStatus,
+    // this.initialStatus,
     this.onStatusChanged,
   });
 
@@ -37,11 +37,11 @@ class CustomCard extends StatefulWidget {
 class _CustomCardState extends State<CustomCard> {
   CardStatus? _selectedStatus;
 
-  @override
-  void initState() {
-    super.initState();
-    _selectedStatus = widget.initialStatus;
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   // _selectedStatus = widget.initialStatus;
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -100,17 +100,17 @@ class _CustomCardState extends State<CustomCard> {
             ),
 
             // Optional radio buttons
-            if (widget.showStatusSelector) ...[
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildRadio("Active", CardStatus.active),
-                  _buildRadio("Upcoming", CardStatus.upcoming),
-                  _buildRadio("Expired", CardStatus.expired),
-                ],
-              ),
-            ],
+            // if (widget.showStatusSelector) ...[
+            //   const SizedBox(height: 10),
+            //   Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //     children: [
+            //       _buildRadio("Active", CardStatus.active),
+            //       _buildRadio("Upcoming", CardStatus.upcoming),
+            //       _buildRadio("Expired", CardStatus.expired),
+            //     ],
+            //   ),
+            // ],
           ],
         ),
       ),

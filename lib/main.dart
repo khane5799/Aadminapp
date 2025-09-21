@@ -1,11 +1,12 @@
 import 'package:adminapp/Provider/AddMemberProvider.dart';
 import 'package:adminapp/Provider/LoginProvider.dart';
 import 'package:adminapp/Provider/MembersProvider.dart';
+import 'package:adminapp/Provider/NFCProvider.dart';
 import 'package:adminapp/Provider/eventProvider.dart';
 import 'package:adminapp/Provider/memberProfileProvider.dart';
 import 'package:adminapp/Routes/routes.dart';
 import 'package:adminapp/Routes/routesGenerator.dart';
-import 'package:adminapp/View/splashScreen.dart';
+import 'package:adminapp/View/NFCTest.dart';
 import 'package:adminapp/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => MemberProvider()),
         ChangeNotifierProvider(create: (_) => EventProvider()),
         ChangeNotifierProvider(create: (_) => MemberProfileProvider()),
+        ChangeNotifierProvider(create: (_) => NfcProvider()),
         // ChangeNotifierProvider(create: (_) => JoinRequestsProvider()),
       ],
       child: const MyApp(),
@@ -36,7 +38,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Community Points System',
-      // home: Splashscreen(),
+      // home: NfcView(),
       initialRoute: Routes.Splashscreen,
       onGenerateRoute: RouteGenerator.generateRoute,
     );

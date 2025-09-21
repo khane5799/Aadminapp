@@ -1,5 +1,6 @@
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/View/Summery/Events_JoindAttendees.dart';
+import 'package:adminapp/Widgets/AnimatedCard.dart';
 import 'package:adminapp/Widgets/appbar.dart';
 import 'package:animate_do/animate_do.dart'; // animation package
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -339,7 +340,7 @@ class _EventListPageState extends State<EventListPage> {
                             String dateText = "";
                             if (event["date"] != null) {
                               try {
-                                dateText = DateFormat("dd MMM yyyy, hh:mm a")
+                                dateText = DateFormat("dd MMM yyyy")
                                     .format(event["date"]);
                               } catch (_) {}
                             }
@@ -377,73 +378,22 @@ class _EventListPageState extends State<EventListPage> {
                             return ZoomIn(
                               duration:
                                   Duration(milliseconds: 200 + (index * 100)),
-                              child: Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 5,
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.all(16),
-                                  leading: CircleAvatar(
-                                    radius: 28,
-                                    backgroundColor: avatarColor,
-                                    child: getEventIcon(event["name"]) != null
-                                        ? Icon(
-                                            getEventIcon(event["name"]),
-                                            color: Colors.white,
-                                            size: 28,
-                                          )
-                                        : Text(
-                                            event["name"][0].toUpperCase(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                  ),
-                                  title: Text(
-                                    event["name"],
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 17,
+                              child: EventCard(
+                                event: event,
+                                index: index,
+                                secondaryColor: secondaryColor,
+                                getEventIcon: getEventIcon,
+                                onTap: (eventId, eventName) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => EventUsersPage(
+                                        eventId: eventId,
+                                        eventName: eventName,
+                                      ),
                                     ),
-                                  ),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (dateText.isNotEmpty)
-                                        Text("📅 $dateText",
-                                            style: const TextStyle(
-                                                color: Colors.grey)),
-                                      Text(
-                                        "👥 Attendees: ${event["attendees"]}",
-                                        style: const TextStyle(
-                                            color: Colors.black87),
-                                      ),
-                                      if (event["points"] != null)
-                                        Text(
-                                          "⭐ Points: ${event["points"]}",
-                                          style:
-                                              TextStyle(color: secondaryColor),
-                                        ),
-                                    ],
-                                  ),
-                                  trailing: const Icon(Icons.arrow_forward_ios),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => EventUsersPage(
-                                          eventId: event["uid"],
-                                          eventName: event["name"],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
+                                  );
+                                },
                               ),
                             );
                           },

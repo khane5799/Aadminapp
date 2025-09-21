@@ -118,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class DashboardPageWidget extends StatelessWidget {
+class DashboardPageWidget extends StatefulWidget {
   final int totalMembers;
   final int totalEvents;
   final Map<String, dynamic>? todaysEvent;
@@ -129,20 +129,12 @@ class DashboardPageWidget extends StatelessWidget {
     this.totalEvents = 0,
     this.todaysEvent,
   });
-  // 👇 Dummy data
-  // final List<Map<String, dynamic>> events = [
-  //   {"name": "Orientation", "attendance": 12},
-  //   {"name": "Workshop A", "attendance": 25},
-  //   {"name": "Workshop B", "attendance": 18},
-  //   {"name": "Hackathon", "attendance": 400},
-  //   {"name": "Team Meetup", "attendance": 9},
-  //   {"name": "Leadership Talk", "attendance": 30},
-  //   {"name": "Annual Party", "attendance": 50},
-  //   {"name": "Training Session", "attendance": 22},
-  //   {"name": "Networking", "attendance": 16},
-  //   {"name": "Closing Ceremony", "attendance": 35},
-  // ];
 
+  @override
+  State<DashboardPageWidget> createState() => _DashboardPageWidgetState();
+}
+
+class _DashboardPageWidgetState extends State<DashboardPageWidget> {
   /// 🔹 Fetch all events and their attendance counts
   Future<List<Map<String, dynamic>>> fetchEventAttendance() async {
     final eventsSnapshot =
@@ -488,20 +480,64 @@ class DashboardPageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Determine loading based on your data availability
-    final isLoadingTopCards =
-        totalMembers == 0 && totalEvents == 0 && todaysEvent == null;
+    final isLoadingTopCards = widget.totalMembers == 0 &&
+        widget.totalEvents == 0 &&
+        widget.todaysEvent == null;
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Today's Event Card or Shimmer
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: isLoadingTopCards
-                ? Shimmer.fromColors(
-                    baseColor: Colors.grey.shade300,
-                    highlightColor: Colors.grey.shade100,
-                    child: Card(
+    return RefreshIndicator(
+      onRefresh: () async {
+
+        setState(() {});
+      },
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Today's Event Card or Shimmer
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: isLoadingTopCards
+                  ? Shimmer.fromColors(
+                      baseColor: Colors.grey.shade300,
+                      highlightColor: Colors.grey.shade100,
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
+                        elevation: 5,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 120,
+                                    height: 16,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    width: 180,
+                                    height: 20,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                width: 80,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : Card(
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                       elevation: 5,
@@ -513,166 +549,141 @@ class DashboardPageWidget extends StatelessWidget {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  width: 120,
-                                  height: 16,
-                                  color: Colors.white,
-                                ),
+                                const Text("Today's Event",
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.grey)),
                                 const SizedBox(height: 6),
-                                Container(
-                                  width: 180,
-                                  height: 20,
-                                  color: Colors.white,
+                                Text(
+                                  widget.todaysEvent != null
+                                      ? widget.todaysEvent!['name'] ?? 'No Name'
+                                      : "No Event Today",
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
                             Container(
-                              width: 80,
-                              height: 24,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: widget.todaysEvent != null
+                                    ? Colors.green[100]
+                                    : Colors.grey[300],
                                 borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                widget.todaysEvent != null
+                                    ? "Ongoing"
+                                    : "No Event",
+                                style: TextStyle(
+                                  color: widget.todaysEvent != null
+                                      ? Colors.green
+                                      : Colors.grey,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  )
-                : Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    elevation: 5,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text("Today's Event",
-                                  style: TextStyle(
-                                      fontSize: 16, color: Colors.grey)),
-                              const SizedBox(height: 6),
-                              Text(
-                                todaysEvent != null
-                                    ? todaysEvent!['name'] ?? 'No Name'
-                                    : "No Event Today",
-                                style: const TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: todaysEvent != null
-                                  ? Colors.green[100]
-                                  : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              todaysEvent != null ? "Ongoing" : "No Event",
-                              style: TextStyle(
-                                color: todaysEvent != null
-                                    ? Colors.green
-                                    : Colors.grey,
-                                fontWeight: FontWeight.bold,
+            ),
+
+            // Stats Row or Shimmer
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+              child: isLoadingTopCards
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(2, (index) {
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(right: index < 2 ? 10 : 0),
+                            child: Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      }),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.only(right: 10.0, left: 30),
+                            child: StatCard(
+                              title: "Members",
+                              value: "${widget.totalMembers}",
+                              icon: Icons.people,
+                              iconColor: primerycolor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.only(right: 30.0, left: 10),
+                            child: StatCard(
+                              title: "Events",
+                              value: "${widget.totalEvents}",
+                              icon: Icons.event,
+                              iconColor: Colors.orange,
+                            ),
+                          ),
+                        ),
+                        // const SizedBox(width: 10),
+                        // const Expanded(
+                        //   child: StatCard(
+                        //     title: "Summary",
+                        //     value: "12",
+                        //     icon: Icons.bar_chart,
+                        //     iconColor: Colors.blue,
+                        //   ),
+                        // ),
+                      ],
                     ),
-                  ),
-          ),
+            ),
 
-          // Stats Row or Shimmer
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
-            child: isLoadingTopCards
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(3, (index) {
-                      return Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(right: index < 2 ? 10 : 0),
-                          child: Shimmer.fromColors(
-                            baseColor: Colors.grey.shade300,
-                            highlightColor: Colors.grey.shade100,
-                            child: Container(
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: StatCard(
-                          title: "Members",
-                          value: "$totalMembers",
-                          icon: Icons.people,
-                          iconColor: primerycolor,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: StatCard(
-                          title: "Events",
-                          value: "$totalEvents",
-                          icon: Icons.event,
-                          iconColor: Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: StatCard(
-                          title: "Summary",
-                          value: "12",
-                          icon: Icons.bar_chart,
-                          iconColor: Colors.blue,
-                        ),
-                      ),
-                    ],
+            // Attendance Chart
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                elevation: 5,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FutureBuilder<List<Map<String, dynamic>>>(
+                    future: fetchEventAttendance(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: buildAttendanceChartShimmer());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Text("No events found");
+                      }
+                      return buildAttendanceChart(snapshot.data!);
+                    },
                   ),
-          ),
-
-          // Attendance Chart
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              elevation: 5,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: FutureBuilder<List<Map<String, dynamic>>>(
-                  future: fetchEventAttendance(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: buildAttendanceChartShimmer());
-                    }
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text("No events found");
-                    }
-                    return buildAttendanceChart(snapshot.data!);
-                  },
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,20 +1,16 @@
-import 'dart:io';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-import 'dart:ui';
-
 import 'package:adminapp/Constents/Colors.dart';
+import 'package:adminapp/Provider/NFCProvider.dart';
 import 'package:adminapp/Provider/eventProvider.dart';
 import 'package:adminapp/View/Events/EventCustomeButton.dart';
+import 'package:adminapp/View/Events/NFCDilog.dart';
+import 'package:adminapp/View/Events/QR_Dilog.dart';
 import 'package:adminapp/Widgets/CustomCard.dart';
 import 'package:adminapp/Widgets/FlutterToast.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:nfc_manager/nfc_manager.dart';
 import 'package:provider/provider.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:share_plus/share_plus.dart';
 
 final GlobalKey qrKey = GlobalKey();
 
@@ -34,13 +30,24 @@ class _EventsPageState extends State<EventsPage>
   DateTime? _selectedDate;
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
+  bool _isNfcAvailable = false;
 
   @override
   void initState() {
     super.initState();
+    _checkNfcAvailability();
     _tabController = TabController(length: 3, vsync: this);
     // Fetch events from Firestore on init
     Provider.of<EventProvider>(context, listen: false).fetchEvents();
+  }
+
+  Future<void> _checkNfcAvailability() async {
+    bool available = await NfcManager.instance.isAvailable();
+    if (mounted) {
+      setState(() {
+        _isNfcAvailable = available;
+      });
+    }
   }
 
   IconData? getEventIcon(String name) {
@@ -89,118 +96,242 @@ class _EventsPageState extends State<EventsPage>
   }
 
   Widget _buildEventCard(Map<String, dynamic> event) {
-    CardStatus initialStatus;
-    switch (event["status"]) {
-      case "active":
-        initialStatus = CardStatus.active;
-        break;
-      case "upcoming":
-        initialStatus = CardStatus.upcoming;
-        break;
-      case "expired":
-        initialStatus = CardStatus.expired;
-        break;
-      default:
-        initialStatus = CardStatus.active;
-    }
+    final nfcProvider = Provider.of<NfcProvider>(context, listen: false);
+    // CardStatus initialStatus;
+    // switch (event["status"]) {
+    //   case "active":
+    //     initialStatus = CardStatus.active;
+    //     break;
+    //   case "upcoming":
+    //     initialStatus = CardStatus.upcoming;
+    //     break;
+    //   case "expired":
+    //     initialStatus = CardStatus.expired;
+    //     break;
+    //   default:
+    //     initialStatus = CardStatus.active;
+    // }
     String formatTime(DateTime dateTime) {
       return DateFormat("ha").format(dateTime).replaceAll(":00", "");
     }
 
-    return CustomCard(
-      initials: event["name"][0]!,
-      title: event["name"]!,
-      details: [
-        "Day: ${event["day"]}",
-        "Date: ${_formatDate(event["date"].toDate())}",
-        "Start: ${formatTime(event["startTime"].toDate())}",
-        "End: ${formatTime(event["endTime"].toDate())}",
-      ],
-      icons: const [Icons.qr_code],
-      iconActions: [
-        () {
-          showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                contentPadding: const EdgeInsets.all(20),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+    return ZoomIn(
+      duration: const Duration(milliseconds: 500),
+      child: CustomCard(
+        initials: event["name"][0]!,
+        title: event["name"]!,
+        details: [
+          "🎯 ${event["day"]}",
+          "📅 ${_formatDate(event["date"].toDate())}",
+          "⏰ ${formatTime(event["startTime"].toDate())}-${formatTime(event["endTime"].toDate())}",
+          "⭐ Points: ${event["points"]}"
+        ],
+        icons: const [
+          Icons.contactless,
+          Icons.qr_code,
+        ],
+        iconActions: [
+          () async {
+            // First, check NFC availability
+            final isNfcAvailable = await nfcProvider.checkNFCAvailability();
+
+            if (isNfcAvailable) {
+              // Store the context before showing dialog
+              final currentContext = context;
+
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => NfcDialog(
+                  currentContext: context,
+                  nfcProvider: nfcProvider,
+                  event: event["uid"],
+                  qrKey: qrKey,
+                  primerycolor: primerycolor,
+                  secondaryColor: secondaryColor,
+                ),
+              );
+
+              try {
+                // Write to NFC tag
+                debugPrint(
+                    "Starting NFC write operation for event: ${event["uid"]}");
+                await nfcProvider.writeToTag(event["uid"]);
+
+                debugPrint("NFC Write operation completed successfully");
+
+                // Close dialog after successful write
+                if (currentContext.mounted) {
+                  Navigator.pop(currentContext);
+
+                  // Show success message
+                  FlushbarHelper.showSuccess(
+                      "NFC Tag Written Successfully", context);
+                  // ScaffoldMessenger.of(currentContext).showSnackBar(
+                  //   const SnackBar(
+                  //     content: Text("NFC Tag Written Successfully"),
+                  //     backgroundColor: Colors.green,
+                  //     duration: Duration(seconds: 2),
+                  //   ),
+                  // );
+                }
+              } catch (e) {
+                debugPrint("Error in NFC write operation: $e");
+
+                // Close dialog and show error
+                if (currentContext.mounted) {
+                  Navigator.pop(currentContext);
+                  FlushbarHelper.showError(
+                      "Something went wrong, Try again", context);
+                }
+              }
+            } else {
+              // NFC not available - show error dialog
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => Dialog(
+                  backgroundColor: Colors.transparent,
+                  insetPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      const Text("Event QR Code",
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: 180,
-                        height: 180,
-                        child: RepaintBoundary(
-                          key: qrKey,
-                          child: QrImageView(
-                            data: event["uid"],
-                            version: QrVersions.auto,
-                            backgroundColor: Colors.white,
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          gradient: LinearGradient(
+                            colors: [Colors.red.shade400, Colors.red.shade700],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.redAccent.withOpacity(0.6),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Error Icon
+                              Container(
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.error_outline,
+                                  size: 42,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              // Title
+                              const Text(
+                                "NFC Not Available",
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Subtitle
+                              const Text(
+                                "Oops! NFC is not available on this device or is currently disabled.\n\nPlease use Share QR instead.",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              // Action buttons
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  // Close button
+                                  OutlinedButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      side: const BorderSide(
+                                          color: Colors.white70),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 18, vertical: 10),
+                                    ),
+                                    child: const Text("Close"),
+                                  ),
+                                  // QR Fallback
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      // Add your QR share logic here
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => QrDialog(
+                                          eventUid: event["uid"],
+                                          qrKey: qrKey,
+                                          primerycolor: primerycolor,
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.qr_code,
+                                        color: Colors.white),
+                                    label: const Text("Share QR"),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Colors.white.withOpacity(0.2),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 18, vertical: 10),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.share, color: Colors.white),
-                        label: const Text(
-                          "Share",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primerycolor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () async {
-                          try {
-                            // Get QR widget boundary
-                            RenderRepaintBoundary boundary =
-                                qrKey.currentContext!.findRenderObject()
-                                    as RenderRepaintBoundary;
-                            ui.Image image =
-                                await boundary.toImage(pixelRatio: 3.0);
-
-                            // Convert to byte data
-                            ByteData? byteData = await image.toByteData(
-                                format: ui.ImageByteFormat.png);
-                            Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-                            // Save to temp directory
-                            final tempDir = await getTemporaryDirectory();
-                            final file =
-                                await File('${tempDir.path}/qr.png').create();
-                            await file.writeAsBytes(pngBytes);
-
-                            // Share image file
-                            await Share.shareXFiles([XFile(file.path)],
-                                text: "");
-                          } catch (e) {
-                            debugPrint("Error sharing QR image: $e");
-                          }
-                        },
                       ),
                     ],
                   ),
                 ),
               );
-            },
-          );
-        }
-      ],
-      iconColor: primerycolor,
-      showStatusSelector: true,
-      initialStatus: initialStatus,
-      onStatusChanged: (status) {
-        print("Selected: $status");
-      },
+              debugPrint("NFC Not Supported");
+            }
+          },
+          () {
+            showDialog(
+              context: context,
+              builder: (context) => QrDialog(
+                eventUid: event["uid"],
+                qrKey: qrKey,
+                primerycolor: primerycolor,
+              ),
+            );
+          },
+        ],
+        iconColor: primerycolor,
+        showStatusSelector: true,
+        // initialStatus: initialStatus,
+        onStatusChanged: (status) {
+          print("Selected: $status");
+        },
+      ),
     );
   }
 

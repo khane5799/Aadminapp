@@ -58,6 +58,8 @@ dependencies:
   provider: ^6.1.5+1
   another_flushbar: ^1.12.32
   fl_chart: ^0.63.0
+  nfc_manager: ^3.5.0
+  lottie: ^3.2.0
 
 dev_dependencies:
   flutter_test:
