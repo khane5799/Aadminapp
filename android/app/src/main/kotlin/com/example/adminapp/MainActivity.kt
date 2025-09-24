@@ -1,4 +1,4 @@
-package com.Zhobats.AfghanET // Change to your package name
+package com.umno.adminapp
 
 import android.app.PendingIntent
 import android.content.Intent

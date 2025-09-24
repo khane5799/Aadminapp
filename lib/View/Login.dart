@@ -48,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
                       size: 100, color: Colors.white),
                   const SizedBox(height: 20),
                   const Text(
-                    "Login to MemberApp",
+                    "Login to Community Points System",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 28,

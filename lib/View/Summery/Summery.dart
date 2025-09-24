@@ -293,85 +293,92 @@ class _SummaryPageState extends State<SummaryPage>
         builder: (context, double scale, child) {
           return Transform.scale(scale: scale, child: child);
         },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          height: 120,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                primerycolor.withOpacity(0.85),
-                secondaryColor.withOpacity(0.85),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: primerycolor.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 6),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            height: 120,
+            width: MediaQuery.of(context).size.width * 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  primerycolor.withOpacity(0.85),
+                  secondaryColor.withOpacity(0.85),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      padding: const EdgeInsets.all(12),
-                      child: const Icon(
-                        Icons.event_available_rounded,
-                        size: 32,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "View All Events",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                  color: Colors.black26,
-                                  blurRadius: 6,
-                                  offset: Offset(0, 2)),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          "Tap to explore event attendance",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: primerycolor.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
                 ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(right: 20),
-                child: Icon(Icons.arrow_forward_ios,
-                    color: Colors.white, size: 22),
-              ),
-            ],
+              ],
+            ),
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min, // Add this
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: const Icon(
+                          Icons.event_available_rounded,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "View All Events",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                    color: Colors.black26,
+                                    blurRadius: 6,
+                                    offset: Offset(0, 2)),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Flexible(
+                            child: Text(
+                              "Tap to explore event attendance",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(right: 10),
+                  child: Icon(Icons.arrow_forward_ios,
+                      color: Colors.white, size: 22),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -208,6 +208,7 @@ class _DashboardPageWidgetState extends State<DashboardPageWidget> {
 
     return Container(
       height: 350,
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(8),
@@ -486,7 +487,6 @@ class _DashboardPageWidgetState extends State<DashboardPageWidget> {
 
     return RefreshIndicator(
       onRefresh: () async {
-
         setState(() {});
       },
       child: SingleChildScrollView(

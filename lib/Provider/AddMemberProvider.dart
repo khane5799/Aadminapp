@@ -47,7 +47,7 @@ class AddMemberProvider extends ChangeNotifier {
         "points": 0,
         "position": position,
         "facebook": facebook,
-        "tikTok": tikTok,
+        "tiktok": tikTok,
         "referralPoints": 0,
         "EventPoints": 0,
         "instagram": instagram,
