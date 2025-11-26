@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/View/Summery/EventsList.dart';
 import 'package:adminapp/Widgets/appbar.dart';
@@ -22,7 +21,6 @@ class _SummaryPageState extends State<SummaryPage>
   Future<void> fetchEventsPerMonth() async {
     final snapshot =
         await FirebaseFirestore.instance.collection("events").get();
-
     Map<String, int> monthlyCount = {
       "Jan": 0,
       "Feb": 0,
@@ -99,6 +97,7 @@ class _SummaryPageState extends State<SummaryPage>
   Future<List<Map<String, dynamic>>> getTopOverall() async {
     final snapshot = await FirebaseFirestore.instance
         .collection("Members")
+        .where("points", isGreaterThan: 0)
         .orderBy("points", descending: true)
         .limit(5)
         .get();
@@ -115,6 +114,7 @@ class _SummaryPageState extends State<SummaryPage>
   Future<List<Map<String, dynamic>>> getTopReferrals() async {
     final snapshot = await FirebaseFirestore.instance
         .collection("Members")
+        .where("referralPoints", isGreaterThan: 0)
         .orderBy("referralPoints", descending: true)
         .limit(5)
         .get();
@@ -131,6 +131,7 @@ class _SummaryPageState extends State<SummaryPage>
   Future<List<Map<String, dynamic>>> getTopEventPoints() async {
     final snapshot = await FirebaseFirestore.instance
         .collection("Members")
+        .where("EventPoints", isGreaterThan: 0)
         .orderBy("EventPoints", descending: true)
         .limit(5)
         .get();
@@ -187,19 +188,20 @@ class _SummaryPageState extends State<SummaryPage>
                 return _buildTopMembersCard(snapshot.data!, "referralPoints");
               },
             ),
-            _buildSectionTitle("🔥 Top Members (Event Points)"),
-            FutureBuilder(
-              future: getTopEventPoints(), // 🔹 pass your eventId here
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: _buildShimmerTopMembersCard());
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Text("No data found");
-                }
-                return _buildTopMembersCard(snapshot.data!, "eventPoints");
-              },
-            ),
+            // *********************🔥 Top Members (Event Points)****************
+            // _buildSectionTitle("🔥 Top Members (Event Points)"),
+            // FutureBuilder(
+            //   future: getTopEventPoints(), // 🔹 pass your eventId here
+            //   builder: (context, snapshot) {
+            //     if (snapshot.connectionState == ConnectionState.waiting) {
+            //       return Center(child: _buildShimmerTopMembersCard());
+            //     }
+            //     if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            //       return const Text("No data found");
+            //     }
+            //     return _buildTopMembersCard(snapshot.data!, "eventPoints");
+            //   },
+            // ),
             const SizedBox(height: 24),
             _buildEventCard(),
             const SizedBox(height: 24),
@@ -406,7 +408,7 @@ class _SummaryPageState extends State<SummaryPage>
   Widget _buildTopMembersCard(
       List<Map<String, dynamic>> members, String keyName) {
     return SizedBox(
-      height: 160,
+      height: 180,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: members.length,
@@ -582,41 +584,56 @@ class _SummaryPageState extends State<SummaryPage>
       );
     }).toList();
 
-    return SizedBox(
-      height: 260,
-      child: BarChart(
-        BarChartData(
-          maxY: maxY,
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final month = eventsPerMonth.keys.elementAt(value.toInt());
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6.0),
-                    child: Text(
-                      month,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                },
+    // Calculate width based on number of months to prevent overlapping
+    final chartWidth =
+        eventsPerMonth.length * 60.0; // 60 per bar (adjust as needed)
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: SizedBox(
+          width: chartWidth,
+          height: 300, // adjust height if needed
+          child: BarChart(
+            BarChartData(
+              maxY: maxY,
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      final index = value.toInt();
+                      if (index < 0 || index >= eventsPerMonth.length)
+                        return const SizedBox.shrink();
+                      final month = eventsPerMonth.keys.elementAt(index);
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Text(
+                          month,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: 1,
+                    getTitlesWidget: (val, meta) =>
+                        Text(val.toInt().toString()),
+                  ),
+                ),
               ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                interval: 1,
-                getTitlesWidget: (val, meta) => Text(val.toInt().toString()),
-              ),
+              borderData: FlBorderData(show: false),
+              barGroups: barGroups,
+              gridData: const FlGridData(show: false),
             ),
           ),
-          borderData: FlBorderData(show: false),
-          barGroups: barGroups,
-          gridData: const FlGridData(show: false),
         ),
       ),
     );

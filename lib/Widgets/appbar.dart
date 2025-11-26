@@ -8,6 +8,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final IconData? icon;
   final bool centertitle;
   final bool automaticallyImplyLeading;
+  final PreferredSizeWidget? bottom; // ✅ Optional bottom widget
+  final double? appbarHeight;
 
   const CustomAppBar({
     super.key,
@@ -17,16 +19,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.ActiononTap,
     required this.primerycolor,
     required this.secondaryColor,
+    this.appbarHeight=50,
     this.icon,
+    this.bottom,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(50);
+  Size get preferredSize =>  Size.fromHeight(appbarHeight!);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      automaticallyImplyLeading : automaticallyImplyLeading,
+      automaticallyImplyLeading: automaticallyImplyLeading,
       iconTheme: const IconThemeData(color: Colors.white),
       centerTitle: centertitle,
       flexibleSpace: Container(
@@ -60,6 +64,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         const SizedBox(width: 20),
       ],
+      bottom: bottom, // ✅ Pass to AppBar
     );
   }
 }

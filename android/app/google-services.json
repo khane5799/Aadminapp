@@ -1,13 +1,33 @@
 {
   "project_info": {
-    "project_number": "828113347992",
-    "project_id": "community-pointsystem",
-    "storage_bucket": "community-pointsystem.firebasestorage.app"
+    "project_number": "268523167333",
+    "firebase_url": "https://attendencepointsystem-default-rtdb.firebaseio.com",
+    "project_id": "attendencepointsystem",
+    "storage_bucket": "attendencepointsystem.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:828113347992:android:341aa903260ef97fe3b7ed",
+        "mobilesdk_app_id": "1:268523167333:android:e43b063e3b73fb9bab308c",
+        "android_client_info": {
+          "package_name": "com.becommon.AttendancePointSystem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfMB7jpEdJSB_pGKWXdQ_VL7e8b1ls3cg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:268523167333:android:bbe32cf6704c1a6cab308c",
         "android_client_info": {
           "package_name": "com.umno.adminapp"
         }
@@ -15,7 +35,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBnSxtRctaVKS-lcAiAGALXVXbM6ExBsyY"
+          "current_key": "AIzaSyCfMB7jpEdJSB_pGKWXdQ_VL7e8b1ls3cg"
         }
       ],
       "services": {

@@ -387,7 +387,7 @@ class _EventListPageState extends State<EventListPage> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => EventUsersPage(
+                                      builder: (_) => Events_JoindAttendees(
                                         eventId: eventId,
                                         eventName: eventName,
                                       ),

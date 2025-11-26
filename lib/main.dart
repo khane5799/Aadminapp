@@ -1,9 +1,10 @@
-import 'package:adminapp/Provider/AddMemberProvider.dart';
+import 'package:adminapp/Provider/MemberProviders/AddMemberProvider.dart';
 import 'package:adminapp/Provider/LoginProvider.dart';
-import 'package:adminapp/Provider/MembersProvider.dart';
+import 'package:adminapp/Provider/MemberProviders/MembersProvider.dart';
 import 'package:adminapp/Provider/NFCProvider.dart';
-import 'package:adminapp/Provider/eventProvider.dart';
-import 'package:adminapp/Provider/memberProfileProvider.dart';
+import 'package:adminapp/Provider/eventProviders/eventProvider.dart';
+import 'package:adminapp/Provider/MemberProviders/memberProfileProvider.dart';
+import 'package:adminapp/Provider/summeryProviders/summeryProvider.dart';
 import 'package:adminapp/Routes/routes.dart';
 import 'package:adminapp/Routes/routesGenerator.dart';
 import 'package:adminapp/View/NFCTest.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => EventProvider()),
         ChangeNotifierProvider(create: (_) => MemberProfileProvider()),
         ChangeNotifierProvider(create: (_) => NfcProvider()),
+        // ChangeNotifierProvider(create: (_) => SummaryProvider()),
         // ChangeNotifierProvider(create: (_) => JoinRequestsProvider()),
       ],
       child: const MyApp(),

@@ -1,12 +1,13 @@
 import 'package:adminapp/Constents/Colors.dart';
 import 'package:adminapp/Provider/NFCProvider.dart';
-import 'package:adminapp/Provider/eventProvider.dart';
+import 'package:adminapp/Provider/eventProviders/eventProvider.dart';
 import 'package:adminapp/View/Events/EventCustomeButton.dart';
 import 'package:adminapp/View/Events/NFCDilog.dart';
 import 'package:adminapp/View/Events/QR_Dilog.dart';
 import 'package:adminapp/Widgets/CustomCard.dart';
 import 'package:adminapp/Widgets/FlutterToast.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nfc_manager/nfc_manager.dart';
@@ -48,6 +49,225 @@ class _EventsPageState extends State<EventsPage>
         _isNfcAvailable = available;
       });
     }
+  }
+
+  void _openEditEventDialog(Map<String, dynamic> event) {
+    final TextEditingController editNameController =
+        TextEditingController(text: event["name"]);
+    final TextEditingController editPointsController =
+        TextEditingController(text: event["points"].toString());
+
+    DateTime selectedDate = (event["date"] as Timestamp).toDate();
+    DateTime startTime = (event["startTime"] as Timestamp).toDate();
+    DateTime endTime = (event["endTime"] as Timestamp).toDate();
+
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          return Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Edit Event",
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: primerycolor)),
+                  const SizedBox(height: 8),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: editNameController,
+                    decoration: InputDecoration(
+                      labelText: "Event Name",
+                      prefixIcon: const Icon(Icons.event),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: editPointsController,
+                    decoration: InputDecoration(
+                      labelText: "Event Points",
+                      prefixIcon: const Icon(Icons.star),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 14),
+                  // Date Picker
+                  InkWell(
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate != null) {
+                        setStateDialog(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today, color: primerycolor),
+                          const SizedBox(width: 10),
+                          Text(
+                              "${selectedDate.day}-${selectedDate.month}-${selectedDate.year}"),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // Start Time
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(startTime),
+                      );
+                      if (picked != null) {
+                        setStateDialog(() {
+                          startTime = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              picked.hour,
+                              picked.minute);
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.schedule, color: primerycolor),
+                          const SizedBox(width: 10),
+                          Text(TimeOfDay.fromDateTime(startTime)
+                              .format(context)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // End Time
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(endTime),
+                      );
+                      if (picked != null) {
+                        setStateDialog(() {
+                          endTime = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              picked.hour,
+                              picked.minute);
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 14, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.schedule, color: primerycolor),
+                          const SizedBox(width: 10),
+                          Text(TimeOfDay.fromDateTime(endTime).format(context)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      CustomButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        iconData: const Icon(Icons.cancel),
+                        buttonColor: Colors.red,
+                        buttonTitle: 'Cancel',
+                      ),
+                      const SizedBox(width: 12),
+                      CustomButton(
+                        onPressed: () async {
+                          if (editNameController.text.isEmpty) {
+                            FlushbarHelper.showError(
+                                "Event name is required", context);
+                            return;
+                          }
+
+                          setStateDialog(() {
+                            isLoading = true;
+                          });
+
+                          final updatedEvent = {
+                            "name": editNameController.text,
+                            "points":
+                                int.tryParse(editPointsController.text) ?? 10,
+                            "day": _getDayName(selectedDate.weekday),
+                            "date": selectedDate,
+                            "startTime": startTime,
+                            "endTime": endTime,
+                          };
+
+                          await Provider.of<EventProvider>(context,
+                                  listen: false)
+                              .updateEvent(event["uid"], updatedEvent);
+
+                          setStateDialog(() {
+                            isLoading = false;
+                          });
+
+                          Navigator.pop(context);
+                        },
+                        iconData: const Icon(Icons.save),
+                        buttonColor: Colors.green,
+                        buttonTitle: 'Save',
+                        isLoading: isLoading,
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
   }
 
   IconData? getEventIcon(String name) {
@@ -97,20 +317,7 @@ class _EventsPageState extends State<EventsPage>
 
   Widget _buildEventCard(Map<String, dynamic> event) {
     final nfcProvider = Provider.of<NfcProvider>(context, listen: false);
-    // CardStatus initialStatus;
-    // switch (event["status"]) {
-    //   case "active":
-    //     initialStatus = CardStatus.active;
-    //     break;
-    //   case "upcoming":
-    //     initialStatus = CardStatus.upcoming;
-    //     break;
-    //   case "expired":
-    //     initialStatus = CardStatus.expired;
-    //     break;
-    //   default:
-    //     initialStatus = CardStatus.active;
-    // }
+ 
     String formatTime(DateTime dateTime) {
       return DateFormat("ha").format(dateTime).replaceAll(":00", "");
     }
@@ -118,7 +325,6 @@ class _EventsPageState extends State<EventsPage>
     return ZoomIn(
       duration: const Duration(milliseconds: 500),
       child: CustomCard(
-        initials: event["name"][0]!,
         title: event["name"]!,
         details: [
           "🎯 ${event["day"]}",
@@ -128,7 +334,9 @@ class _EventsPageState extends State<EventsPage>
         ],
         icons: const [
           Icons.contactless,
+          Icons.remove_red_eye,
           Icons.qr_code,
+          Icons.delete,
         ],
         iconActions: [
           () async {
@@ -149,6 +357,7 @@ class _EventsPageState extends State<EventsPage>
                   qrKey: qrKey,
                   primerycolor: primerycolor,
                   secondaryColor: secondaryColor,
+                  SubTitle: 'Scan the NFC to share event\'s details',
                 ),
               );
 
@@ -315,6 +524,9 @@ class _EventsPageState extends State<EventsPage>
             }
           },
           () {
+            _openEditEventDialog(event);
+          },
+          () {
             showDialog(
               context: context,
               builder: (context) => QrDialog(
@@ -324,6 +536,116 @@ class _EventsPageState extends State<EventsPage>
               ),
             );
           },
+          () async {
+            debugPrint("this is Event delete button");
+            // Confirm deletion with the user
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                title: const Text(
+                  "Delete Event",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+                content: const Text(
+                  "Are you sure you want to delete this Event? This action cannot be undone.",
+                  style: TextStyle(fontSize: 16, height: 1.4),
+                ),
+                actionsPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                actionsAlignment: MainAxisAlignment.spaceBetween,
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.grey.shade700,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text("Cancel"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade600,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "Delete",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm != true) return; // user canceled
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => Center(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: Colors.redAccent),
+                      SizedBox(height: 16),
+                      Text(
+                        "Deleting event...",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+
+            try {
+              debugPrint("this is my eventID: ${event["uid"]}");
+              // Delete from Firestore using document ID
+              await FirebaseFirestore.instance
+                  .collection('events')
+                  .doc(event[
+                      'uid']) // or 'membershipNumber' if you use it as doc ID
+                  .delete();
+
+              // Refresh events list
+              await Provider.of<EventProvider>(context, listen: false)
+                  .fetchEvents();
+              Navigator.pop(context); // Close loader
+
+              FlushbarHelper.showSuccess("Event deleted successfully", context);
+            } catch (e) {
+              debugPrint("Error deleting event: $e");
+              FlushbarHelper.showError("Failed to delete event", context);
+            }
+          }
         ],
         iconColor: primerycolor,
         showStatusSelector: true,
@@ -510,6 +832,7 @@ class _EventsPageState extends State<EventsPage>
                         buttonTitle: 'Cancel',
                       ),
                       const SizedBox(width: 12),
+            
                       CustomButton(
                         onPressed: () async {
                           if (_eventNameController.text.isEmpty ||
@@ -521,10 +844,7 @@ class _EventsPageState extends State<EventsPage>
                             return;
                           }
 
-                          setStateDialog(() {
-                            isLoading = true;
-                          });
-
+                          // ✅ Validate End Time >= Start Time
                           final startDateTime = DateTime(
                             _selectedDate!.year,
                             _selectedDate!.month,
@@ -541,6 +861,17 @@ class _EventsPageState extends State<EventsPage>
                             _endTime!.minute,
                           );
 
+                          if (endDateTime.isBefore(startDateTime)) {
+                            FlushbarHelper.showError(
+                                "End time cannot be before Start time",
+                                context);
+                            return;
+                          }
+
+                          setStateDialog(() {
+                            isLoading = true;
+                          });
+
                           // 👇 Apply default value if empty
                           final int eventPoints = _eventPointController
                                   .text.isEmpty
@@ -549,7 +880,7 @@ class _EventsPageState extends State<EventsPage>
 
                           final newEvent = {
                             "name": _eventNameController.text,
-                            "points": eventPoints, // ✅ Store points here
+                            "points": eventPoints,
                             "day": _getDayName(_selectedDate!.weekday),
                             "date": _selectedDate,
                             "startTime": startDateTime,

@@ -47,38 +47,29 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: "AIzaSyBnSxtRctaVKS-lcAiAGALXVXbM6ExBsyY",
-    appId: "1:828113347992:android:341aa903260ef97fe3b7ed",
-    messagingSenderId: "828113347992",
-    projectId: "community-pointsystem",
-    storageBucket: "community-pointsystem.firebasestorage.app",
-    // apiKey: 'AIzaSyB0WhepzFKflY39YTFqK5HPnuQdRoCtPUU',
-    // appId: '1:630468613180:web:67ed70a2c583bd708f1f39',
-    // messagingSenderId: '630468613180',
-    // projectId: 'doctorapp-61cb4',
-    // authDomain: 'doctorapp-61cb4.firebaseapp.com',
-    // storageBucket: 'doctorapp-61cb4.appspot.com',
+    apiKey: "AIzaSyCfMB7jpEdJSB_pGKWXdQ_VL7e8b1ls3cg",
+    appId: "1:268523167333:android:bbe32cf6704c1a6cab308c",
+    messagingSenderId: "268523167333",
+    projectId: "attendencepointsystem",
+    storageBucket: "attendencepointsystem.firebasestorage.app",
+    databaseURL: "https://attendencepointsystem-default-rtdb.firebaseio.com",
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: "AIzaSyBnSxtRctaVKS-lcAiAGALXVXbM6ExBsyY",
-    appId: "1:828113347992:android:341aa903260ef97fe3b7ed",
-    messagingSenderId: "828113347992",
-    projectId: "community-pointsystem",
-    storageBucket: "community-pointsystem.firebasestorage.app",
+    apiKey: "AIzaSyCfMB7jpEdJSB_pGKWXdQ_VL7e8b1ls3cg",
+    appId: "1:268523167333:android:bbe32cf6704c1a6cab308c",
+    messagingSenderId: "268523167333",
+    projectId: "attendencepointsystem",
+    storageBucket: "attendencepointsystem.firebasestorage.app",
+    databaseURL: "https://attendencepointsystem-default-rtdb.firebaseio.com",
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: "AIzaSyBnSxtRctaVKS-lcAiAGALXVXbM6ExBsyY",
-    appId: "1:828113347992:android:341aa903260ef97fe3b7ed",
-    messagingSenderId: "828113347992",
-    projectId: "community-pointsystem",
-    storageBucket: "community-pointsystem.firebasestorage.app",
-    // apiKey: 'AIzaSyBzRZ0hQLY-5A_JLDZhOoIRu4G4q9W9Z0Q',
-    // appId: '1:630468613180:ios:8bcca646a7a85a668f1f39',
-    // messagingSenderId: '630468613180',
-    // projectId: 'doctorapp-61cb4',
-    // storageBucket: 'doctorapp-61cb4.appspot.com',
-    // iosBundleId: 'com.example.nfcappNew',
+    apiKey: "AIzaSyCfMB7jpEdJSB_pGKWXdQ_VL7e8b1ls3cg",
+    appId: "1:268523167333:android:bbe32cf6704c1a6cab308c",
+    messagingSenderId: "268523167333",
+    projectId: "attendencepointsystem",
+    storageBucket: "attendencepointsystem.firebasestorage.app",
+    databaseURL: "https://attendencepointsystem-default-rtdb.firebaseio.com",
   );
 }

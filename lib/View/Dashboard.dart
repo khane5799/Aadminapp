@@ -5,6 +5,7 @@ import 'package:adminapp/View/JoinRequests.dart';
 import 'package:adminapp/View/MemberView/Member.dart';
 import 'package:adminapp/View/Summery/Summery.dart';
 import 'package:adminapp/Widgets/appbar.dart';
+import 'package:adminapp/Widgets/logOutConfirmation.dart';
 import 'package:adminapp/Widgets/statcard.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -83,7 +84,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               automaticallyImplyLeading: false,
               title: "Dashboard",
               ActiononTap: () {
-                loginProvider.logout(context);
+                showDialog(
+                  context: context,
+                  builder: (context) => LogoutConfirmationDialog(
+                    onConfirm: () {
+                      loginProvider.logout(context);
+                      debugPrint("User logged out");
+                    },
+                  ),
+                );
+
+                // loginProvider.logout(context);
               },
               icon: Icons.logout,
               centertitle: true,
@@ -135,6 +146,23 @@ class DashboardPageWidget extends StatefulWidget {
 }
 
 class _DashboardPageWidgetState extends State<DashboardPageWidget> {
+  Future<Map<String, dynamic>?> fetchUpcomingEvent() async {
+    final today = DateTime.now();
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection("events")
+        .where("date",
+            isGreaterThan: Timestamp.fromDate(today)) // 👈 only future
+        .orderBy("date", descending: false) // soonest first
+        .limit(1) // only need next event
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      return snapshot.docs.first.data();
+    }
+    return null;
+  }
+
   /// 🔹 Fetch all events and their attendance counts
   Future<List<Map<String, dynamic>>> fetchEventAttendance() async {
     final eventsSnapshot =
@@ -493,6 +521,7 @@ class _DashboardPageWidgetState extends State<DashboardPageWidget> {
         child: Column(
           children: [
             // Today's Event Card or Shimmer
+            // Inside build()
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: isLoadingTopCards
@@ -512,16 +541,14 @@ class _DashboardPageWidgetState extends State<DashboardPageWidget> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Container(
-                                    width: 120,
-                                    height: 16,
-                                    color: Colors.white,
-                                  ),
+                                      width: 120,
+                                      height: 16,
+                                      color: Colors.white),
                                   const SizedBox(height: 6),
                                   Container(
-                                    width: 180,
-                                    height: 20,
-                                    color: Colors.white,
-                                  ),
+                                      width: 180,
+                                      height: 20,
+                                      color: Colors.white),
                                 ],
                               ),
                               Container(
@@ -543,48 +570,72 @@ class _DashboardPageWidgetState extends State<DashboardPageWidget> {
                       elevation: 5,
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        child: FutureBuilder<Map<String, dynamic>?>(
+                          future: widget.todaysEvent != null
+                              ? Future.value(
+                                  widget.todaysEvent) // show today if exists
+                              : fetchUpcomingEvent(), // otherwise fetch upcoming
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const SizedBox(
+                                  height: 60,
+                                  child: Center(
+                                      child: CircularProgressIndicator()));
+                            }
+
+                            final event = snapshot.data;
+
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text("Today's Event",
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.todaysEvent != null
+                                          ? "Today's Event"
+                                          : "Upcoming Event",
+                                      style: const TextStyle(
+                                          fontSize: 16, color: Colors.grey),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      event != null
+                                          ? event['name'] ?? 'No Name'
+                                          : "No Event",
+                                      style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: event != null
+                                        ? Colors.green[100]
+                                        : Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    event != null
+                                        ? (widget.todaysEvent != null
+                                            ? "Ongoing"
+                                            : "Upcoming")
+                                        : "No Event",
                                     style: TextStyle(
-                                        fontSize: 16, color: Colors.grey)),
-                                const SizedBox(height: 6),
-                                Text(
-                                  widget.todaysEvent != null
-                                      ? widget.todaysEvent!['name'] ?? 'No Name'
-                                      : "No Event Today",
-                                  style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold),
+                                      color: event != null
+                                          ? Colors.green
+                                          : Colors.grey,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: widget.todaysEvent != null
-                                    ? Colors.green[100]
-                                    : Colors.grey[300],
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                widget.todaysEvent != null
-                                    ? "Ongoing"
-                                    : "No Event",
-                                style: TextStyle(
-                                  color: widget.todaysEvent != null
-                                      ? Colors.green
-                                      : Colors.grey,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ),
                     ),

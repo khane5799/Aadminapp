@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 
@@ -65,7 +66,7 @@ class NfcProvider extends ChangeNotifier {
     try {
       // Stop any existing session first
       await stopSession();
-      
+
       _isProcessing = true;
       notifyListeners();
 
@@ -153,7 +154,7 @@ class NfcProvider extends ChangeNotifier {
     try {
       // Stop any existing session first
       await stopSession();
-      
+
       _isProcessing = true;
       _nfcMessage = ""; // Clear previous message
       notifyListeners();
@@ -176,9 +177,9 @@ class NfcProvider extends ChangeNotifier {
         onDiscovered: (NfcTag tag) async {
           try {
             debugPrint("NFC tag discovered, writing data...");
-            
-            // Build an NDEF record with your message
-            final ndefRecord = NdefRecord.createText(message);
+
+            // Build an NDEF record with your message (as URI)
+            final ndefRecord = NdefRecord.createUri(Uri.parse(message));
             final ndefMessage = NdefMessage([ndefRecord]);
             final ndef = Ndef.from(tag);
 
@@ -210,15 +211,14 @@ class NfcProvider extends ChangeNotifier {
             await ndef.write(ndefMessage);
             _nfcMessage = "Write successful: $message";
             debugPrint(_nfcMessage);
-            
+
             // Stop session after successful write
             await NfcManager.instance.stopSession();
             _isSessionActive = false;
             _isProcessing = false;
             notifyListeners();
-            
+
             completer.complete();
-            
           } catch (e) {
             _nfcMessage = "Error writing tag: $e";
             debugPrint(_nfcMessage);
@@ -241,7 +241,6 @@ class NfcProvider extends ChangeNotifier {
 
       // Wait for the operation to complete
       await completer.future;
-      
     } catch (e) {
       _isProcessing = false;
       _isSessionActive = false;

@@ -2,11 +2,11 @@ import 'package:adminapp/View/Events/QR_Dilog.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-
 class NfcDialog extends StatelessWidget {
   final BuildContext currentContext;
   final dynamic nfcProvider;
   final String event;
+  final String SubTitle;
   final GlobalKey qrKey;
   final Color primerycolor;
   final Color secondaryColor;
@@ -16,6 +16,7 @@ class NfcDialog extends StatelessWidget {
     required this.currentContext,
     required this.nfcProvider,
     required this.event,
+    required this.SubTitle,
     required this.qrKey,
     required this.primerycolor,
     required this.secondaryColor,
@@ -87,10 +88,10 @@ class NfcDialog extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   // Subtitle
-                  const Text(
-                    "Hold your NFC card near the phone\nto mark attendance.",
+                  Text(
+                    SubTitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 15,
                       color: Colors.white,
                     ),

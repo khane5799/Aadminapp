@@ -94,6 +94,13 @@ class EventProvider extends ChangeNotifier {
   EventProvider() {
     fetchEvents();
   }
+  Future<void> updateEvent(String uid, Map<String, dynamic> updatedData) async {
+    await FirebaseFirestore.instance
+        .collection("events")
+        .doc(uid)
+        .update(updatedData);
+    await fetchEvents(); // refresh list
+  }
 
   /// Add a new event and store its Firestore UID inside the document
   Future<void> addEvent(Map<String, dynamic> event) async {

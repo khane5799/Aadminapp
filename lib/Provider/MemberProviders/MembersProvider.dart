@@ -36,10 +36,21 @@ class MemberProvider extends ChangeNotifier {
           "uniqueID": data["uniqueID"] ?? "",
           "createdAt": data["createdAt"] ?? "",
           "facebook": data["facebook"] ?? "",
+          "tiktok": data["tiktok"] ?? "",
           "instagram": data["instagram"] ?? "",
           "state": data["state"] ?? "",
           "twitter": data["twitter"] ?? "",
           "whatsapp": data["whatsapp"] ?? "",
+          // 🟢 Added the missing ones
+          "idCard": data["idCard"] ?? "",
+          "dob": data["dob"] ?? "",
+          "phone": data["phone"] ?? "",
+          "address": data["address"] ?? "",
+          "email": data["email"] ?? "",
+          "occupation": data["occupation"] ?? "",
+          "city": data["city"] ?? "",
+          "branch": data["branch"] ?? "",
+          "postcode": data["postcode"] ?? "",
         };
       }).toList();
     } catch (e) {
@@ -57,7 +68,7 @@ class MemberProvider extends ChangeNotifier {
     final queryLower = query.toLowerCase();
     return _members.where((member) {
       final name = member["name"].toString().toLowerCase();
-      final code = member["membershipCode"].toString().toLowerCase();
+      final code = member["membershipNumber"].toString().toLowerCase();
       return name.contains(queryLower) || code.contains(queryLower);
     }).toList();
   }

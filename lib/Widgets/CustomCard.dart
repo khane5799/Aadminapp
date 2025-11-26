@@ -4,16 +4,14 @@ import 'package:flutter/material.dart';
 enum CardStatus { active, upcoming, expired }
 
 class CustomCard extends StatefulWidget {
-  final String title;
+  final String title; // usually name
   final List<String> details;
   final List<IconData>? icons;
   final List<VoidCallback>? iconActions;
   final Color? iconColor;
   final String? profileImageUrl;
-  final String? initials; // New property for initials
 
   final bool showStatusSelector;
-  // final CardStatus? initialStatus;
   final ValueChanged<CardStatus>? onStatusChanged;
 
   const CustomCard({
@@ -24,9 +22,7 @@ class CustomCard extends StatefulWidget {
     this.iconActions,
     this.iconColor,
     this.profileImageUrl,
-    this.initials,
     this.showStatusSelector = false,
-    // this.initialStatus,
     this.onStatusChanged,
   });
 
@@ -37,111 +33,82 @@ class CustomCard extends StatefulWidget {
 class _CustomCardState extends State<CustomCard> {
   CardStatus? _selectedStatus;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   // _selectedStatus = widget.initialStatus;
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Profile + Details Row
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _buildAvatar(), // Cleanly handle avatar cases
+                _buildAvatar(),
                 const SizedBox(width: 12),
-
-                // Title + Details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        widget.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
+                      Text(widget.title,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18)),
                       const SizedBox(height: 4),
-                      ...widget.details.map((d) => Text(d)),
+                      ...widget.details.map((d) => Text(
+                            d,
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey.shade600),
+                          )),
                     ],
                   ),
                 ),
-
-                // Optional icons
-                if (widget.icons != null && widget.icons!.isNotEmpty)
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(widget.icons!.length, (index) {
-                      return IconButton(
-                        icon: Icon(
-                          widget.icons![index],
-                          color: widget.iconColor ?? secondaryColor,
-                        ),
-                        onPressed: widget.iconActions != null &&
-                                widget.iconActions!.length > index
-                            ? widget.iconActions![index]
-                            : () {},
-                      );
-                    }),
-                  ),
               ],
             ),
 
-            // Optional radio buttons
-            // if (widget.showStatusSelector) ...[
-            //   const SizedBox(height: 10),
-            //   Row(
-            //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            //     children: [
-            //       _buildRadio("Active", CardStatus.active),
-            //       _buildRadio("Upcoming", CardStatus.upcoming),
-            //       _buildRadio("Expired", CardStatus.expired),
-            //     ],
-            //   ),
-            // ],
+            const SizedBox(height: 16),
+
+            // Icon Row (always horizontal for 3 icons)
+            if (widget.icons != null && widget.icons!.isNotEmpty)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(widget.icons!.length, (index) {
+                  return _buildIconButton(
+                    widget.icons![index],
+                    widget.iconActions != null &&
+                            widget.iconActions!.length > index
+                        ? widget.iconActions![index]
+                        : () {},
+                  );
+                }),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // Avatar builder
+  /// Avatar builder with fallback: image → initials from name → default icon
   Widget _buildAvatar() {
-    // Case 1: Network image
-    if (widget.profileImageUrl != null && widget.profileImageUrl!.isNotEmpty) {
+    // Case 1: Profile image
+    if (widget.profileImageUrl != null &&
+        widget.profileImageUrl!.trim().isNotEmpty) {
       return CircleAvatar(
-        radius: 25,
+        radius: 28,
         backgroundImage: NetworkImage(widget.profileImageUrl!),
       );
     }
 
-    // Case 2: Initials
-    if (widget.initials != null && widget.initials!.isNotEmpty) {
-      // Take first 2 letters safely
-      String initials = widget.initials!
-          .substring(
-            0,
-            widget.initials!.length >= 2 ? 2 : widget.initials!.length,
-          )
-          .toUpperCase();
-
-      // Generate a consistent color based on initials
+    // Case 2: Initials from title (name)
+    if (widget.title.isNotEmpty) {
+      String initials = _getInitialsFromName(widget.title);
       Color bgColor = _getColorFromInitials(initials);
 
       return CircleAvatar(
-        radius: 25,
+        radius: 28,
         backgroundColor: bgColor,
         child: Text(
           initials,
@@ -154,19 +121,27 @@ class _CustomCardState extends State<CustomCard> {
       );
     }
 
-    // Case 3: Default person icon
+    // Case 3: Default avatar
     return CircleAvatar(
-      radius: 25,
+      radius: 28,
       backgroundColor: Colors.grey.shade300,
       child: Icon(Icons.person, size: 28, color: Colors.grey.shade700),
     );
   }
 
-  /// Generate a color from initials so it varies per user
+  /// Extract initials safely from full name
+  String _getInitialsFromName(String name) {
+    List<String> parts = name.trim().split(" ");
+    if (parts.length == 1) {
+      return parts[0][0].toUpperCase();
+    } else {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+  }
+
+  /// Generate background color from initials hash
   Color _getColorFromInitials(String initials) {
-    // Simple hashing: sum char codes
     int hash = initials.codeUnits.fold(0, (prev, elem) => prev + elem);
-    // Pick a color from a list
     List<Color> colors = [
       Colors.blue,
       Colors.red,
@@ -180,23 +155,19 @@ class _CustomCardState extends State<CustomCard> {
     return colors[hash % colors.length];
   }
 
-  Widget _buildRadio(String label, CardStatus status) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Radio<CardStatus>(
-          value: status,
-          groupValue: _selectedStatus,
-          activeColor: secondaryColor,
-          onChanged: (value) {
-            setState(() => _selectedStatus = value);
-            if (value != null && widget.onStatusChanged != null) {
-              widget.onStatusChanged!(value);
-            }
-          },
+  /// Clean icon button
+  Widget _buildIconButton(IconData icon, VoidCallback onPressed) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(40),
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: (widget.iconColor ?? secondaryColor).withOpacity(0.1),
+          shape: BoxShape.circle,
         ),
-        Text(label),
-      ],
+        child: Icon(icon, color: widget.iconColor ?? secondaryColor, size: 26),
+      ),
     );
   }
 }

@@ -4,21 +4,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-class EventUsersPage extends StatefulWidget {
+class Events_JoindAttendees extends StatefulWidget {
   final String eventId;
   final String eventName;
 
-  const EventUsersPage({
+  const Events_JoindAttendees({
     super.key,
     required this.eventId,
     required this.eventName,
   });
 
   @override
-  State<EventUsersPage> createState() => _EventUsersPageState();
+  State<Events_JoindAttendees> createState() => _Events_JoindAttendeesState();
 }
 
-class _EventUsersPageState extends State<EventUsersPage> {
+class _Events_JoindAttendeesState extends State<Events_JoindAttendees> {
   List<Map<String, dynamic>> attendees = [];
   List<Map<String, dynamic>> filteredAttendees = [];
   bool isLoading = true;
@@ -44,21 +44,28 @@ class _EventUsersPageState extends State<EventUsersPage> {
 
       for (var doc in attendanceSnap.docs) {
         final uniqueID = doc["uniqueID"];
-
         if (uniqueID != null) {
-          final memberSnap =
-              await firestore.collection("Members").doc(uniqueID).get();
+          final memberQuery = await firestore
+              .collection("Members")
+              .where("uniqueID", isEqualTo: uniqueID)
+              .limit(1)
+              .get();
 
-          if (memberSnap.exists) {
-            final memberData = memberSnap.data()!;
+          if (memberQuery.docs.isNotEmpty) {
+            final memberData = memberQuery.docs.first.data();
             tempAttendees.add({
               "name": memberData["name"] ?? "Unknown",
               "membershipNumber": memberData["membershipNumber"] ?? "N/A",
               "photoUrl": memberData["photoUrl"],
+              "points": memberData["points"] ?? 0,
             });
           }
         }
       }
+
+      // Sort by points descending
+      tempAttendees.sort(
+          (a, b) => (b["points"] ?? 0).compareTo(a["points"] ?? 0));
 
       setState(() {
         attendees = tempAttendees;
@@ -87,7 +94,7 @@ class _EventUsersPageState extends State<EventUsersPage> {
     return Scaffold(
       appBar: CustomAppBar(
         automaticallyImplyLeading: true,
-        title: "Attendees • ${widget.eventName}",
+        title: widget.eventName,
         centertitle: true,
         primerycolor: primerycolor,
         secondaryColor: secondaryColor,
@@ -141,6 +148,64 @@ class _EventUsersPageState extends State<EventUsersPage> {
                           itemBuilder: (context, index) {
                             final attendee = filteredAttendees[index];
 
+                            // 🏅 Determine styled trailing for top 3
+                            Widget? trailing;
+                            if (index < 3) {
+                              // Choose color based on rank
+                              Color badgeColor;
+                              String rankText;
+                              switch (index) {
+                                case 0:
+                                  badgeColor = const Color(0xFFFFD700); // Gold
+                                  rankText = "1st";
+                                  break;
+                                case 1:
+                                  badgeColor =
+                                      const Color(0xFFC0C0C0); // Silver
+                                  rankText = "2nd";
+                                  break;
+                                case 2:
+                                  badgeColor =
+                                      const Color(0xFFCD7F32); // Bronze
+                                  rankText = "3rd";
+                                  break;
+                                default:
+                                  badgeColor = Colors.grey;
+                                  rankText = "";
+                              }
+
+                              trailing = Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: badgeColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border:
+                                      Border.all(color: badgeColor, width: 1.2),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.emoji_events_rounded,
+                                      color: badgeColor,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      rankText,
+                                      style: TextStyle(
+                                        color: badgeColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } else {
+                              trailing = null;
+                            }
+
                             return TweenAnimationBuilder(
                               duration:
                                   Duration(milliseconds: 400 + index * 100),
@@ -172,6 +237,10 @@ class _EventUsersPageState extends State<EventUsersPage> {
                                   title: Text(attendee["name"]),
                                   subtitle: Text(
                                       "Membership No: ${attendee["membershipNumber"]}"),
+                                  trailing: Transform.scale(
+                                    scale: index < 3 ? 1.1 : 1.0,
+                                    child: trailing,
+                                  ),
                                 ),
                               ),
                             );
